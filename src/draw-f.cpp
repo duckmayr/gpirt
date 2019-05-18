@@ -17,7 +17,7 @@
  * y is the response, and
  * S is the covariance matrix,
  */
-arma::vec draw_f(const arma::vec& f, const arma::vec& y, const arma::mat& S) {
+arma::vec ess(const arma::vec& f, const arma::vec& y, const arma::mat& S) {
     arma::uword n = f.n_elem;
     // First we draw "an ellipse" -- a vector drawn from a multivariate
     // normal with mean zero and covariance Sigma. rmvnorm() will return
@@ -38,10 +38,6 @@ arma::vec draw_f(const arma::vec& f, const arma::vec& y, const arma::mat& S) {
     arma::vec f_prime(n);
     int iter = 0;
     while ( reject ) {
-        if ( iter > max_iters ) {
-            Rcpp::warning("max_iters exceeded");
-            break;
-        }
         // Get f_prime given current epsilon
         f_prime = f * std::cos(epsilon) + nu * std::sin(epsilon);
         iter += 1;
@@ -63,3 +59,14 @@ arma::vec draw_f(const arma::vec& f, const arma::vec& y, const arma::mat& S) {
     return f_prime;
 }
 
+// Function to draw f
+
+arma::mat draw_f(const arma::mat& f, const arma::mat& y, const arma::mat& S) {
+    arma::uword n = f.n_rows;
+    arma::uword m = f.n_cols;
+    arma::mat result(n, m);
+    for ( arma::uword j = 0; j < m; ++j) {
+        result.col(j) = ess(f.col(j), y.col(j), S);
+    }
+    return result;
+}

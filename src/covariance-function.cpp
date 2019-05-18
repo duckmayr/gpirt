@@ -1,7 +1,6 @@
 #include <RcppArmadillo.h>
 
-arma::mat K(const arma::vec& x1, const arma::vec& x2, const double sf,
-            const double ell) {
+arma::mat K(const arma::vec& x1, const arma::vec& x2, double sf, double ell) {
     arma::uword n = x1.n_elem;
     arma::uword m = x2.n_elem;
     arma::mat result(n, m);
