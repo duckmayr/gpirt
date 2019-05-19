@@ -11,7 +11,8 @@ arma::mat draw_f(const arma::mat& f, const arma::mat& y, const arma::mat& S);
 // Function to draw fstar
 arma::mat draw_fstar(const arma::mat& f, const arma::vec& theta,
                      const arma::vec& theta_star, const arma::mat& S00,
-                     const arma::mat& S11);
+                     const arma::mat& S11, const double sf,
+                     const double ell);
 
 // Function to draw theta
 arma::vec draw_theta(const int n, const arma::vec& theta_star,
