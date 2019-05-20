@@ -4,11 +4,11 @@
 \alias{gpirtMCMC}
 \title{Gaussian Process IRT MCMC}
 \usage{
-gpirtMCMC(y, sample_iterations, burn_iterations, yea_code = 1,
+gpirtMCMC(responses, sample_iterations, burn_iterations, yea_code = 1,
   nay_code = 0, sf = 1, ell = 1)
 }
 \arguments{
-\item{y}{A matrix of responses}
+\item{responses}{A matrix of responses}
 
 \item{sample_iterations}{An integer vector of length one giving the number
 of samples to record}

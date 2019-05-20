@@ -2,7 +2,7 @@
 #'
 #' Provides posterior samples for the GP-IRT.
 #'
-#' @param y A matrix of responses
+#' @param responses A matrix of responses
 #' @param sample_iterations An integer vector of length one giving the number
 #'   of samples to record
 #' @param burn_iterations An integer vector of length one giving the number of
@@ -21,15 +21,15 @@
 #'   second element, "f", is an array of dimensions n x m x sample_iterations
 #'   giving the f(theta) parameter draws.
 #' @export
-gpirtMCMC <- function(y, sample_iterations, burn_iterations, yea_code = 1,
-                      nay_code = 0, sf = 1, ell = 1) {
+gpirtMCMC <- function(responses, sample_iterations, burn_iterations,
+                      yea_code = 1, nay_code = 0, sf = 1, ell = 1) {
     # First we fix the responses so that yeas are 1 and nays are -1.
     # We copy the responses in case the nay_code is 1 or yea_code is -1
     tmp <- responses
     responses[which(tmp == yea_code)] <- 1
     responses[which(tmp == nay_code)] <- -1
     # Now we can call the C++ sampler function
-    result <- .gpirtMCMC(y, sample_iterations, burn_iterations, sf, ell)
+    result <- .gpirtMCMC(responses, sample_iterations, burn_iterations, sf, ell)
     # And return the result
     return(result)
 }
