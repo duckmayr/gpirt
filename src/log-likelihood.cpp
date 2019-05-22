@@ -13,6 +13,9 @@ double ll(const arma::vec& f, const arma::vec& y) {
     int n = f.n_elem;
     double result = 0.0;
     for ( arma::uword i = 0; i < n; ++i ) {
+        if ( std::isnan(y[i]) ) {
+            continue;
+        }
         double a = y[i] * f[i];
         result -= std::log(1 + std::exp(-a));
     }

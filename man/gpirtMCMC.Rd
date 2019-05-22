@@ -4,8 +4,8 @@
 \alias{gpirtMCMC}
 \title{Gaussian Process IRT MCMC}
 \usage{
-gpirtMCMC(responses, sample_iterations, burn_iterations, yea_code = 1,
-  nay_code = 0, sf = 1, ell = 1)
+gpirtMCMC(responses, sample_iterations, burn_iterations, yea_codes = 1,
+  nay_codes = 0, missing_codes = NA, sf = 1, ell = 1)
 }
 \arguments{
 \item{responses}{A matrix of responses}
@@ -16,11 +16,14 @@ of samples to record}
 \item{burn_iterations}{An integer vector of length one giving the number of
 burn in (unrecorded) iterations}
 
-\item{yea_code}{A vector of length one giving the value corresponding to
-a "yea" response; default is 1}
+\item{yea_codes}{A vector giving the values corresponding to a "yea"
+response; default is 1}
 
-\item{nay_code}{A vector of length one giving the value corresponding to
-a "nay" response; default is 0}
+\item{nay_codes}{A vector giving the values corresponding to a "nay"
+response; default is 0}
+
+\item{missing_codes}{A vector giving the values corresponding to a missing
+response; default is NA}
 
 \item{sf}{A numeric vector of length one giving the scale factor for the
 covariance function for the Gaussian process prior; default is 1}
