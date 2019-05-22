@@ -29,8 +29,17 @@ Rcpp::List gpirtMCMC(const arma::mat& y, const int sample_iterations,
     // Setup results storage
     arma::mat theta_draws(sample_iterations, n);
     arma::cube f_draws(n, m, sample_iterations);
+    // Information for progress bar:
+    double progress_increment = (1.0 / total_iterations) * 100.0;
+    double progress = 0.0;
     // Start sampling loop
     for ( int iter = 0; iter < total_iterations; ++iter ) {
+        // Update progress and check for user interrupt (normally you'd do this
+        // and the interrupt check less often, but -- at least for now -- each
+        // iteration takes long enough to warrant doing it each time)
+        Rprintf("\r%6.3f %% complete", progress);
+        progress += progress_increment;
+        Rcpp::checkUserInterrupt();
         // Draw new parameter values
         f = draw_f(f, y, S);
         f_star = draw_fstar(f, theta, theta_star, S, S11, sf, ell);
@@ -43,6 +52,7 @@ Rcpp::List gpirtMCMC(const arma::mat& y, const int sample_iterations,
             f_draws.slice(iter - burn_iterations) = f;
         }
     }
+    Rprintf("\r100.000 %% complete\n");
     Rcpp::List result = Rcpp::List::create(Rcpp::Named("theta", theta_draws),
                                            Rcpp::Named("f", f_draws));
     return result;
