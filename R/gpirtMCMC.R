@@ -7,10 +7,12 @@
 #'   of samples to record
 #' @param burn_iterations An integer vector of length one giving the number of
 #'   burn in (unrecorded) iterations
-#' @param yea_code A vector of length one giving the value corresponding to
-#'   a "yea" response; default is 1
-#' @param nay_code A vector of length one giving the value corresponding to
-#'   a "nay" response; default is 0
+#' @param yea_codes A vector giving the values corresponding to a "yea"
+#'   response; default is 1
+#' @param nay_codes A vector giving the values corresponding to a "nay"
+#'   response; default is 0
+#' @param missing_codes A vector giving the values corresponding to a missing
+#'   response; default is NA
 #' @param sf A numeric vector of length one giving the scale factor for the
 #'   covariance function for the Gaussian process prior; default is 1
 #' @param ell A numeric vector of length one giving the length scale for the
@@ -22,12 +24,14 @@
 #'   giving the f(theta) parameter draws.
 #' @export
 gpirtMCMC <- function(responses, sample_iterations, burn_iterations,
-                      yea_code = 1, nay_code = 0, sf = 1, ell = 1) {
+                      yea_codes = 1, nay_codes = 0, missing_codes = NA,
+                      sf = 1, ell = 1) {
     # First we fix the responses so that yeas are 1 and nays are -1.
     # We copy the responses in case the nay_code is 1 or yea_code is -1
     tmp <- responses
-    responses[which(tmp == yea_code)] <- 1
-    responses[which(tmp == nay_code)] <- -1
+    responses[which(tmp %in% yea_codes)]     <-  1
+    responses[which(tmp %in% nay_codes)]     <- -1
+    responses[which(tmp %in% missing_codes)] <- NA
     # Now we can call the C++ sampler function
     result <- .gpirtMCMC(responses, sample_iterations, burn_iterations, sf, ell)
     # And return the result
