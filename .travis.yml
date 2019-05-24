@@ -1,0 +1,15 @@
+# R for travis: see documentation at https://docs.travis-ci.com/user/languages/r
+
+language: R
+sudo: false
+cache: packages
+os:
+    - linux
+    - osx
+
+
+# Until this gets merged into master, we ensure it only builds this branch:
+branches:
+    only:
+        - ensure-mac-support
+
