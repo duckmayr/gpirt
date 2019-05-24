@@ -13,3 +13,7 @@ branches:
     only:
         - ensure-mac-support
 
+# More informative failures:
+after_failure:
+    - cat "${RCHECK_DIR}/00install.out"
+
