@@ -41,23 +41,28 @@ llvm_mentions=$(echo "$cxx_version" | grep -i -c -e 'apple llvm')
 clang_mentions=$(echo "$cxx_version" | grep -c -e 'clang')
 gxx_mentions=$(echo "$cxx_version" | grep -c -e '^g..')
 
-check_openmp=false
+check_openmp=false                              # By default we don't even try
+                                                # to use the -fopenmp flag
 
-if [[ "$sys_name" == "Darwin" ]]; then
-    echo "On Mac with $llvm_mentions LLVM mentions, $clang_mentions clang mentions, and $gxx_mensions gxx mentions."
-    echo "The cxx version is $cxx_version"
-    if [[[ "$llvm_mentions" -lt 1 && "$clang_mentions" -gt 0 ]]]; then
-        if [[ "$major" -gt 3 ]]; then
-            check_openmp=true
-        elif [[[ "$major" == 3 && "$minor" -gt 7 ]]]; then
-            check_openmp=true
+if [[ "$sys_name" == "Darwin" ]]; then          # If we're on Mac,
+    if [[ "$llvm_mentions" -lt 1 ]]; then       # and not using LLVM,
+        if [[ "$clang_mentions" -gt 0 ]]; then  # and we are using clang,
+            if [[ "$major" -gt 3 ]]; then       # at least 4.0,
+                check_openmp=true               # we'll check for -fopenmp flag
+            elif [[ "$major" == 3 ]]; then      # as well if no LLVM and clang
+                if [[ "$minor" -gt 7 ]]; then   # is at least 3.8
+                    check_openmp=true
+                fi
+            fi
         fi
     fi
-elif [[ "$gxx_mentions" -gt 0 ]]; then
-    if [[ "$major" -gt 5 ]]; then
-        check_openmp=true
-    elif [[[ "$major" == 5 && "$minor" -gt 3 ]]]; then
-        check_openmp=true
+elif [[ "$gxx_mentions" -gt 0 ]]; then          # If not on Mac and using g++
+    if [[ "$major" -gt 5 ]]; then               # at least 6.0,
+        check_openmp=true                       # we'll check for -fopenmp flag
+    elif [[ "$major" == 5 ]]; then              # as well if using g++
+        if [[ "$minor" -gt 3 ]]; then           # at least 5.4
+            check_openmp=true
+        fi
     fi
 fi
 
