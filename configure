@@ -2465,6 +2465,8 @@ gxx_mentions=$(echo "$cxx_version" | grep -c -e '^g..')
 check_openmp=false
 
 if [ "$sys_name" == "Darwin" ]; then
+    echo "On Mac with $llvm_mentions LLVM mentions, $clang_mentions clang mentions, and $gxx_mensions gxx mentions."
+    echo "The cxx version is $cxx_version"
     if [[ "$llvm_mentions" -lt 1 && "$clang_mentions" -gt 0 ]]; then
         if [ "$major" -gt 3 ]; then
             check_openmp=true
