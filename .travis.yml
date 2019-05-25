@@ -7,12 +7,6 @@ os:
     - linux
     - osx
 
-
-# Until this gets merged into master, we ensure it only builds this branch:
-branches:
-    only:
-        - ensure-mac-support
-
 # More informative failures:
 after_failure:
     - cat "${RCHECK_DIR}/00install.out"
