@@ -40,3 +40,42 @@ A list of length two; the first element, "theta", is a matrix of
 \description{
 Provides posterior samples for the GP-IRT.
 }
+\examples{
+ilogit <- function(x) 1 / (1 + exp(-x)) # inverse logit function
+##### Monotonic IRT example ####
+## Simulate data
+gen_responses <- function(theta, alpha, beta) {
+    # Stardard 2PL model
+    n <- length(theta)
+    m <- length(alpha)
+    responses <- matrix(0, n, m)
+    for ( j in 1:m ) {
+        for ( i in 1:n ) {
+            p <- ilogit(alpha[j] + beta[j] * theta[i])
+            responses[i, j] <- sample(0:1, 1, prob = c(1 - p, p))
+        }
+    }
+    return(responses)
+}
+set.seed(1234)
+n <- 30
+m <- 10
+theta <- seq(-3, 3, length.out = n) # Respondent ability parameters
+alpha <- seq(-2, 2, length.out = m) # Item difficulty parameters
+beta  <- runif(m, 0.5, 3)           # Item discrimination parameters
+responses <- gen_responses(theta, alpha, beta)
+
+## Check for unanimity and omit any unanimous items
+table(apply(responses, 2, function(x) length(unique(x))))
+unanimous_items <- which(apply(responses, 2, function(x) length(unique(x))) < 2)
+N <- length(unanimous_items)
+if ( N == 0 ) unanimous_items <- n + 1 else m <- m - N
+responses <- responses[ , -unanimous_items]
+
+## Generate samples
+## (We just use 1 iteration for a short-running toy example here;
+##  try 500-1000+ to fully demo the sampler's behavior)
+samples <- gpirtMCMC(responses, 1, 0)
+str(samples)
+
+}
