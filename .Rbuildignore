@@ -1,2 +1,3 @@
 ^\.travis\.yml$
 ^CONTRIBUTING\.md$
+^appveyor\.yml$
