@@ -24,8 +24,6 @@ Rcpp::List gpirtMCMC(const arma::mat& y, const int sample_iterations,
         theta0_prior[i] = d_truncnorm(theta_star[i], 0, 1, R_NegInf, 0, 1);
         thetai_prior[i] = R::dnorm(theta_star[i], 0, 1, 1);
     }
-    // K(theta_star, theta_star) also doesn't change between iterations
-    arma::mat S11 = K(theta_star, theta_star, sf, ell);
     // Setup results storage
     arma::mat theta_draws(sample_iterations, n);
     arma::cube f_draws(n, m, sample_iterations);
@@ -42,7 +40,7 @@ Rcpp::List gpirtMCMC(const arma::mat& y, const int sample_iterations,
         Rcpp::checkUserInterrupt();
         // Draw new parameter values
         f = draw_f(f, y, S);
-        f_star = draw_fstar(f, theta, theta_star, S, S11, sf, ell);
+        f_star = draw_fstar(f, theta, theta_star, S, sf, ell);
         theta = draw_theta(n, theta_star, y, theta0_prior, thetai_prior, f_star);
         S = K(theta, theta, sf, ell);
         S.diag() += 0.001;
