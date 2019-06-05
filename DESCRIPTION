@@ -21,3 +21,5 @@ LinkingTo:
     RcppDist
 Imports: 
     Rcpp
+Suggests: 
+    testthat
