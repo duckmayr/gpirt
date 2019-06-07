@@ -45,44 +45,45 @@ ex6 <- data.frame(x = factor(c("Yea", "Nay", "Yes")),
 #   ELSE:
 #       (5) yea_codes != nay_codes != missing_codes
 #       (6) entries must be from {yea_codes, nay_codes, missing_codes}
-test_that("name the test", {
-  expect_s3_class(result1, "response_matrix")
-  expect_setequal(c(result1), c(1,-1, NA))
-  expect_s3_class(result2, "response_matrix")
-  expect_setequal(c(result2), c(1,-1, NA))
-  expect_s3_class(result3, "response_matrix")
-  expect_setequal(c(result3), c(1,-1, NA))
-  expect_s3_class(result4, "response_matrix")
-  expect_setequal(c(result4), c(1,-1, NA))
-  expect_s3_class(result5, "response_matrix")
-  expect_setequal(c(result5), c(1,-1, NA))
-  expect_warning(response_matrix(ex6, yea_codes = "Yea", nay_codes = "Nay"))
-  expect_error(response_matrix(list(1)), "Conversion from lists")
+test_that("response_matrix functions properly", {
+    expect_s3_class(result1, "response_matrix")
+    expect_setequal(c(result1), c(1,-1, NA))
+    expect_s3_class(result2, "response_matrix")
+    expect_setequal(c(result2), c(1,-1, NA))
+    expect_s3_class(result3, "response_matrix")
+    expect_setequal(c(result3), c(1,-1, NA))
+    expect_s3_class(result4, "response_matrix")
+    expect_setequal(c(result4), c(1,-1, NA))
+    expect_s3_class(result5, "response_matrix")
+    expect_setequal(c(result5), c(1,-1, NA))
+    expect_warning(response_matrix(ex6, yea_codes = "Yea", nay_codes = "Nay"))
+    expect_error(response_matrix(list(1)), "Conversion from lists")
 })
 
 
 #
 # Add documentation of unit testing goals for is.response_matrix.
 #
-test_that("Does is.response_matrix function properly", {
-  all_true            <- matrix(1)
-  class(all_true)     <- "response_matrix"
-  matrix_false        <- 1
-  class(matrix_false) <- "response_matrix"
-  values_wrong        <- matrix(6)
-  class(values_wrong) <- "response_matrix"
-  expect_false(is.response_matrix(class_false))
-  expect_false(is.response_matrix(matrix_false))
-  expect_false(is.response_matrix(values_wrong))
-  expect_true(is.response_matrix(all_true))
+test_that("is.response_matrix functions properly", {
+    all_true            <- matrix(1)
+    class(all_true)     <- "response_matrix"
+    matrix_false        <- 1
+    class(matrix_false) <- "response_matrix"
+    values_wrong        <- matrix(6)
+    class(values_wrong) <- "response_matrix"
+    class_false         <- matrix(1)
+    expect_false(is.response_matrix(class_false))
+    expect_false(is.response_matrix(matrix_false))
+    expect_false(is.response_matrix(values_wrong))
+    expect_true(is.response_matrix(all_true))
 })
 
 #
 # Add documentation of unit testing goals for as.response_matrix.
 #
 test_that("as.response_matrix functions properly", {
-  expect_identical(as.response_matrix(ex1), result1)
-  expect_identical(as.response_matrix(result1), result1)
+    expect_identical(as.response_matrix(ex1), result1)
+    expect_identical(as.response_matrix(result1), result1)
 })
 
 
