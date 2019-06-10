@@ -1,0 +1,75 @@
+---
+title: "gpirt Vignette"
+author: JBrandon Duck-Mayr and T. Ryan Johnson
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{gpirt Vignette}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(gpirt)
+```
+
+# Introduction
+
+The purpose of this vignette is to detail the mathematics of the algorithms used in the gpirt package.
+
+We have currently gotten rid of the half normal prior on one of the first theta values initialized, but we don't have informative priors on party labels yet. Hence the uncertainty seen in the plots that JB is producing.
+
+# Algorithm
+
+### Notation
+$n$ is the number of respondents, indexed by $i$.
+$m$ is the number of items, indexed by $j$.
+$T$ is the number of stored iterations (burn in not counted), indexed by $t$.
+
+$y$ is an $n \times m$ dimension matrix of respondents by item responses.
+$\theta$ is an $n \times d$ dimension matrix of respondents by ideological dimension ($d=1$).
+$f$ is a $n \times m$ matrix that stores the current value of the latent function at any point in the algorithm. $f$ is at times denoted by the collection of values $\lbrace f_{j} \rbrace$.
+$\theta$ is a $n \times 1$ vector that stores the current value of the $\theta$s at any point in the algorithm. 
+
+Set initial parameter values. Superscripts denote iterations of the algorithm. Subscripts denote respondents/items.
+
+### Algorithms
+
+_Main Algorithm_
+1. Initialize $f$ and $\theta$: $(f^{0}, \theta^{0})$.
+1. (Option A) Let the user specify starting values for $\theta$.
+1. (Option B) Let the user manually specify priors on $\theta$.
+1. For $t = 1,...,T$:
+    1. Use the elliptical slice sampler (ESS) to draw $f^{t}$ given $\theta^{t-1}$, $f^{t-1}$, and $y$.
+    1. Compute the posterior of $\theta$ on a fine grid. Use inverse transform sampling to draw $\theta^{t}$ given $f^{t}$ and $y$. 
+    1. Store $f^{t}$ and $\theta^{t}$ in $f\_draws$ and $theta\_draws$ respectively.
+
+_Supporting Algorithm (1)_
+For $i=1,...,n$:
+    1. Sample $\theta^{t}_{i} \sum p(\theta_{i} | \lbrace f^{t}_{\neg i, j} \rbrace, \theta^{t}_{\neg i}) \propto p(\theta^{t}_{i})p(y | \theta, \lbrace f^{t}_{\neg i, j} \rbrace)$.\\
+    p(\theta^{t}_{i})p(y | \theta, \lbrace f^{t}_{\neg i, j} \rbrace) = p(\theta^{t}_{i}) \int p(y | \theta, \lbrace f^{t}_{\neg i, j} \rbrace)p(f_{1i|...})p(f_{2i}|...)...df_{1i}df_{2i}...\\
+    = \sum_{j} \text{log} \Phi \left( \frac{\mu_{j}}{\sqrt{1 + \sigma^{2}_{j}}} \right)\\
+    where $\mu_{j}$ and \sigma^{2}_{j} are given by [...(2.19) in GPML by Rasmussen and Williams].
+    1. Carry out inverse transform sampling. Since $p(\theta_{i} | y, \lbrace f^{t}_{\neg i, j} \rbrace, \theta^{t}_{\neg i}) \propto \text{log} \phi(\theta_{i}) + \sum_{j} \text{log} \Phi \left( \frac{\mu_{j}}{\sqrt{1 + \sigma^{2}_{j}}} \right)$, calculate the posterior over a fine grid for $\theta^{*}_{i} \in \lbrace -5.0, -4.99, ..., 4.99, 5.0 \rbrace$\\.
+    
+_Supporting Algorithm (2) -- Inverse Transform Sampling_
+For $\theta^{*}_{i} \in \lbrace -5.0, -4.99, ..., 4.99, 5.0 \rbrace$:
+
+    1. Calculate $\text{log} \phi(\theta_{i}) + \sum_{j} \text{log} \Phi \left( \frac{\mu_{j}}{\sqrt{1 + \sigma^{2}_{j}}} \right)$. This gives the posterior log pdf of $\theta^{*}_{i}$ over the grid -- $\lbrace \text{log} p(-5.0 | ...), \text{log} p(-4.9 | ...), ..., \text{log} p(4.9| ...), \text{log} p(5.0|...)\rbrace$.
+    1. Exponentiate each value to obtain the posterior pdf -- $\lbrace p(-5.0 | ...), p(-4.9 | ...), ..., p(4.9| ...), p(5.0|...) \rbrace$.
+    1. For each value in the posterior pdf, calculate the cumulative sum up to that value and scale to obtain the posterior cdf -- $\lbrace p(-5.0 | ...), p(-5.0 | ...) + p(-4.9 | ...), p(-5.0 | ...) + p(-4.9 | ...) + p(-4.8 | ...), ... \rbrace$ with representative element $CDF_{i}$. Scale each $CDF_{i}$ according to $\frac{CDF_{i} - min(CDF_{i})}{max(CDF_{i}) - min(CDF_{i})}$, which generates an approximation to the CDF.
+    1. Sample from the full conditional (the posterior CDF in the preceding step) through Inverse Transform Sampling. Generate a random draw from a $\text{Uniform}{[0,1]}$ distribution, denoted by $p$. If we are at algorithm step $t$ and sub-algorithm stage $i$ from $1,...,n$ where the preceding $1,...,i-1$ samples $\theta^{t}_{1}, ..., \theta^{t}_{i-1}$ have already been generated, then the sample $\theta^{t}_{i}$ from the full conditional is $CDF^{-1}(p) = \lbrace \theta^{*}_{k} : CDF_{k} = min \lbrace CDF : CDF \geq p \rbrace \rbrace$, which is single valued. 
+
+# Details
+
+(Additional notes put here until I better structure the above.)
+
+$\mathbb{P}(y_{ij} = 1) = \sum_{j} \text{log} \Phi \left( \frac{\mu_{j}}{\sqrt{1 + \sigma^{2}_{j}}} \right)$
+
