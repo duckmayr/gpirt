@@ -1,7 +1,7 @@
 #include "gpirt.h"
 
 // [[Rcpp::export(.gpirtMCMC)]]
-Rcpp::List gpirtMCMC(const arma::mat& y, const int sample_iterations,
+Rcpp::List gpirtMCMC(const arma::imat& y, const int sample_iterations,
                      const int burn_iterations, const double sf,
                      const double ell) {
     int n = y.n_rows;
@@ -16,13 +16,10 @@ Rcpp::List gpirtMCMC(const arma::mat& y, const int sample_iterations,
     // Setup grid
     arma::vec theta_star = arma::regspace<arma::vec>(-5.0, 0.01, 5.0);
     int N = theta_star.n_elem;
-    arma::mat f_star(N, m);
     // The prior probabilities for theta_star doesn't change between iterations
-    arma::vec theta0_prior(N);
-    arma::vec thetai_prior(N);
+    arma::vec theta_prior(N);
     for ( int i = 0; i < N; ++i ) {
-        theta0_prior[i] = d_truncnorm(theta_star[i], 0, 1, R_NegInf, 0, 1);
-        thetai_prior[i] = R::dnorm(theta_star[i], 0, 1, 1);
+        theta_prior[i] = R::dnorm(theta_star[i], 0, 1, 1);
     }
     // Setup results storage
     arma::mat theta_draws(sample_iterations, n);
@@ -40,8 +37,7 @@ Rcpp::List gpirtMCMC(const arma::mat& y, const int sample_iterations,
         Rcpp::checkUserInterrupt();
         // Draw new parameter values
         f = draw_f(f, y, S);
-        f_star = draw_fstar(f, theta, theta_star, S, sf, ell);
-        theta = draw_theta(n, theta_star, y, theta0_prior, thetai_prior, f_star);
+        theta = draw_theta(y, ell, sf, f, theta, theta_star, theta_prior);
         S = K(theta, theta, sf, ell);
         S.diag() += 0.001;
         // Store draws

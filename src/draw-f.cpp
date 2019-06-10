@@ -17,7 +17,7 @@
  * y is the response, and
  * S is the covariance matrix,
  */
-arma::vec ess(const arma::vec& f, const arma::vec& y, const arma::mat& S) {
+arma::vec ess(const arma::vec& f, const arma::ivec& y, const arma::mat& S) {
     arma::uword n = f.n_elem;
     // First we draw "an ellipse" -- a vector drawn from a multivariate
     // normal with mean zero and covariance Sigma. rmvnorm() will return
@@ -61,7 +61,7 @@ arma::vec ess(const arma::vec& f, const arma::vec& y, const arma::mat& S) {
 
 // Function to draw f
 
-arma::mat draw_f(const arma::mat& f, const arma::mat& y, const arma::mat& S) {
+arma::mat draw_f(const arma::mat& f, const arma::imat& y, const arma::mat& S) {
     arma::uword n = f.n_rows;
     arma::uword m = f.n_cols;
     arma::mat result(n, m);

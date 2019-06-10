@@ -42,7 +42,7 @@ ex2 <- data.frame(x1 = x[1:3], x2 = x[4:6])
 response_matrix(ex1)
 response_matrix(ex2)
 ## Multiple "yea" codes
-x   <- c(1, -1, 2, 3, -1, NA)
+x   <- c(1, 0, 2, 3, 0, NA)
 ex3 <- matrix(x, nrow = 3)
 ex4 <- data.frame(x1 = x[1:3], x2 = x[4:6])
 response_matrix(ex3, yea_codes = 1:3)

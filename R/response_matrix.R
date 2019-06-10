@@ -22,7 +22,7 @@
 #' response_matrix(ex1)
 #' response_matrix(ex2)
 #' ## Multiple "yea" codes
-#' x   <- c(1, -1, 2, 3, -1, NA)
+#' x   <- c(1, 0, 2, 3, 0, NA)
 #' ex3 <- matrix(x, nrow = 3)
 #' ex4 <- data.frame(x1 = x[1:3], x2 = x[4:6])
 #' response_matrix(ex3, yea_codes = 1:3)
@@ -45,12 +45,12 @@ response_matrix <- function(data, yea_codes = 1, nay_codes = 0,
                    "is currently unsupported."))
     }
     # Now we can coerce 'data' into a matrix;
-    # we also need a copy in case the nay_code is 1 or yea_code is -1.
+    # we also need a copy in case the nay_code is 1 or yea_code is 0.
     result <- as.matrix(data)
     tmp    <- result
-    # Next we fix the data so that yeas are 1 and nays are -1.
+    # Next we fix the data so that yeas are 1 and nays are 0.
     result[which(tmp %in% yea_codes)]     <-  1
-    result[which(tmp %in% nay_codes)]     <- -1
+    result[which(tmp %in% nay_codes)]     <- 0
     result[which(tmp %in% missing_codes)] <- NA
     # If the input was a dataframe of factors, we'll have a character matrix
     # at this point, so this just guards against that
@@ -63,7 +63,7 @@ response_matrix <- function(data, yea_codes = 1, nay_codes = 0,
 # is.response_matrix() checks if an object 'x' is a response_matrix.
 # Since S3 classes don't have any sanity checks, we add a few things here;
 # we not only check for class name, but also that the object is a matrix,
-# and that it only contains the values 1, -1, and NA. As long as those things
+# and that it only contains the values 1, 0, and NA. As long as those things
 # are true, we should be just fine.
 
 #' @rdname response_matrix
@@ -72,7 +72,7 @@ is.response_matrix <- function(x) {
     return(
         "response_matrix" %in% class(x)
         & is.matrix(x)
-        & all(x %in% c(NA, -1, 1))
+        & all(x %in% c(NA, 0, 1))
     )
 }
 

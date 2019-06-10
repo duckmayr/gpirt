@@ -7,12 +7,12 @@
 using namespace Rcpp;
 
 // gpirtMCMC
-Rcpp::List gpirtMCMC(const arma::mat& y, const int sample_iterations, const int burn_iterations, const double sf, const double ell);
+Rcpp::List gpirtMCMC(const arma::imat& y, const int sample_iterations, const int burn_iterations, const double sf, const double ell);
 RcppExport SEXP _gpirt_gpirtMCMC(SEXP ySEXP, SEXP sample_iterationsSEXP, SEXP burn_iterationsSEXP, SEXP sfSEXP, SEXP ellSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::mat& >::type y(ySEXP);
+    Rcpp::traits::input_parameter< const arma::imat& >::type y(ySEXP);
     Rcpp::traits::input_parameter< const int >::type sample_iterations(sample_iterationsSEXP);
     Rcpp::traits::input_parameter< const int >::type burn_iterations(burn_iterationsSEXP);
     Rcpp::traits::input_parameter< const double >::type sf(sfSEXP);

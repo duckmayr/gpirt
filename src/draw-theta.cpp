@@ -1,28 +1,47 @@
 #include "gpirt.h"
 
-arma::vec draw_theta(const int n, const arma::vec& theta_star,
-                     const arma::mat& y, const arma::vec& theta0_prior,
-                     const arma::vec& thetai_prior, const arma::mat& fstar) {
-    int N = theta_star.n_elem;
-    int m = fstar.n_cols;
+arma::vec draw_theta(const arma::imat& y,
+                     const double ell, const double sf,
+                     const arma::mat& f,
+                     const arma::vec& theta,
+                     const arma::vec& theta_star,
+                     const arma::vec& theta_prior) {
+    arma::uword N = theta_star.n_elem;
+    arma::uword m = y.n_cols;
+    arma::uword n = y.n_rows;
     arma::vec result(n);
-    arma::vec responses(m);
-    arma::vec fk(m);
+    arma::ivec responses(m);
     arma::vec P(N);
+    arma::mat S01(n-1, 1);
+    arma::mat S10_S00i(1, n-1);
+    arma::vec th_star(1);
     for ( arma::uword i = 0; i < n; ++i ) {
         // For each respondent,
         responses = y.row(i).t();
+        arma::vec theta_not_i = theta;
+        theta_not_i.shed_row(i);
+        arma::mat f_not_i = f;
+        f_not_i.shed_row(i);
+        arma::mat S00i = K(theta_not_i, theta_not_i, sf, ell);
+        S00i.diag() += 0.000001;
+        S00i = S00i.i();
         for ( arma::uword k = 0; k < N; ++k ) {
             // For each value in theta_star,
             // get the log prior + the log likelihood
-            if ( i == 0 ) {
-                P[k] = theta0_prior[k];
+            th_star[0] = theta_star[k];
+            S01        = K(theta_not_i, th_star, sf, ell);
+            S10_S00i   = S01.t() * S00i;
+            double S   = (sf * sf) - arma::as_scalar(S10_S00i * S01);
+            P[k] = theta_prior[k];
+            for ( arma::uword j = 0; j < m; ++j ) {
+                if ( y(i, j) == INT_MIN ) {
+                    continue;
+                }
+                arma::vec fj = f_not_i.col(j);
+                double mu_j = arma::as_scalar(S10_S00i * fj);
+                double mean = mu_j / (std::sqrt(1 + S));
+                P[k] += R::pnorm(mean, 0.0, 1.0, y(i, j), 1);
             }
-            else {
-                P[k] = thetai_prior[k];
-            }
-            fk = fstar.row(k).t();
-            P[k] += ll(fk, responses);
         }
         // Exponeniate, cumsum, then scale to [0, 1] for the "CDF"
         P = arma::exp(P);
