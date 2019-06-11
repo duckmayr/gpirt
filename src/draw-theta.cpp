@@ -5,7 +5,9 @@ arma::vec draw_theta(const arma::imat& y,
                      const arma::mat& f,
                      const arma::vec& theta,
                      const arma::vec& theta_star,
-                     const arma::vec& theta_prior) {
+                     const arma::vec& L_prior,
+                     const arma::vec& R_prior,
+                     const arma::ivec& party) {
     arma::uword N = theta_star.n_elem;
     arma::uword m = y.n_cols;
     arma::uword n = y.n_rows;
@@ -32,7 +34,12 @@ arma::vec draw_theta(const arma::imat& y,
             S01        = K(theta_not_i, th_star, sf, ell);
             S10_S00i   = S01.t() * S00i;
             double S   = (sf * sf) - arma::as_scalar(S10_S00i * S01);
-            P[k] = theta_prior[k];
+            if ( party[i] ) {
+                P[k] = R_prior[k];
+            }
+            else {
+                P[k] = L_prior[k];
+            }
             for ( arma::uword j = 0; j < m; ++j ) {
                 if ( y(i, j) == INT_MIN ) {
                     continue;

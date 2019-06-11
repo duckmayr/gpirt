@@ -2,9 +2,6 @@
 #include <truncnorm.h>
 #include <mvnorm.h>
 
-Rcpp::List gpirtMCMC(const arma::imat& y, const int sample_iterations,
-                     const int burn_iterations);
-
 // Function to draw f
 arma::mat draw_f(const arma::mat& f, const arma::imat& y, const arma::mat& S);
 
@@ -14,7 +11,9 @@ arma::vec draw_theta(const arma::imat& y,
                      const arma::mat& f,
                      const arma::vec& theta,
                      const arma::vec& theta_star,
-                     const arma::vec& theta_prior);
+                     const arma::vec& L_prior,
+                     const arma::vec& R_prior,
+                     const arma::ivec& party);
 
 // Covariance function
 arma::mat K(const arma::vec& x1, const arma::vec& x2, double sf, double ell);

@@ -8,6 +8,16 @@
 #'   of samples to record
 #' @param burn_iterations An integer vector of length one giving the number of
 #'   burn in (unrecorded) iterations
+#' @param party_affiliation A vector of length \code{nrow(data)} identifying
+#'   each respondent as being in party L or R. Respondents' ideology
+#'   parameters' prior means are -1 for L party members and 1 for R members.
+#'   Only used if \code{data} must be coerced to a \code{response_matrix} object
+#' @param L_codes A vector giving the values corresponding to an "L" party
+#'   affiliation (default is 100 -- Voteview's Democrat party code).
+#'   Only used if \code{data} must be coerced to a \code{response_matrix} object
+#' @param R_codes A vector giving the values corresponding to an "R" party
+#'   affiliation (default is 200 -- Voteview's Republican party code).
+#'   Only used if \code{data} must be coerced to a \code{response_matrix} object
 #' @param yea_codes A vector giving the values corresponding to a "yea"
 #'   response (default is 1); only used if \code{data} must be coerced to a
 #'   \code{response_matrix} object
@@ -21,6 +31,9 @@
 #'   covariance function for the Gaussian process prior; default is 1
 #' @param ell A numeric vector of length one giving the length scale for the
 #'   covariance function for the Gaussian process prior; default is 1
+#' @param theta_init A vector of length \code{nrow(data)} giving initial values
+#'   for the respondent ideology parameters; if NULL (the default), the initial
+#'   values are drawn from the parameters' prior distributions.
 #'
 #' @return A list of length two; the first element, "theta", is a matrix of
 #'   dimensions sample_iterations x n giving the theta parameter draws, and the
@@ -62,17 +75,29 @@
 #' ## Generate samples
 #' ## (We just use 1 iteration for a short-running toy example here;
 #' ##  try 500-1000+ to fully demo the sampler's behavior)
-#' samples <- gpirtMCMC(responses, 1, 0)
+#' party_affiliations <- rep(c(100, 200), each = n/2, length.out = n)
+#' samples <- gpirtMCMC(responses, 1, 0, party_affiliations)
 #' str(samples)
 #'
 #' @export
 gpirtMCMC <- function(data, sample_iterations, burn_iterations,
+                      party_affiliation = NULL, L_codes = 100, R_codes = 200,
                       yea_codes = 1, nay_codes = 0, missing_codes = NA,
-                      sf = 1, ell = 1) {
+                      sf = 1, ell = 1, theta_init = NULL) {
     # First we make sure our data are in the proper format:
-    data <- as.response_matrix(data, yea_codes, nay_codes, missing_codes)
+    data <- as.response_matrix(data, party_affiliation, L_codes, R_codes,
+                               yea_codes, nay_codes, missing_codes)
+    # Then we extract the party affiliations
+    party_affiliations <- ifelse(attr(data, "party") == "L", 0, 1)
+    # And make sure we have initial values for theta
+    if ( is.null(theta_init) ) {
+        prior_means <- ifelse(party_affiliations == "L", -1, 1)
+        theta_init  <- rnorm(nrow(data), mean = prior_means)
+    }
     # Now we can call the C++ sampler function
-    result <- .gpirtMCMC(data, sample_iterations, burn_iterations, sf, ell)
+    result <- .gpirtMCMC(data, theta_init, party_affiliations,
+                         sample_iterations, burn_iterations,
+                         -1.0, 1.0, sf, ell)
     # And return the result
     return(result)
 }

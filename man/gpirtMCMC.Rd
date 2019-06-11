@@ -4,8 +4,10 @@
 \alias{gpirtMCMC}
 \title{Gaussian Process IRT MCMC}
 \usage{
-gpirtMCMC(data, sample_iterations, burn_iterations, yea_codes = 1,
-  nay_codes = 0, missing_codes = NA, sf = 1, ell = 1)
+gpirtMCMC(data, sample_iterations, burn_iterations,
+  party_affiliation = NULL, L_codes = 100, R_codes = 200,
+  yea_codes = 1, nay_codes = 0, missing_codes = NA, sf = 1,
+  ell = 1, theta_init = NULL)
 }
 \arguments{
 \item{data}{An object of class \code{\link{response_matrix}},
@@ -16,6 +18,19 @@ of samples to record}
 
 \item{burn_iterations}{An integer vector of length one giving the number of
 burn in (unrecorded) iterations}
+
+\item{party_affiliation}{A vector of length \code{nrow(data)} identifying
+each respondent as being in party L or R. Respondents' ideology
+parameters' prior means are -1 for L party members and 1 for R members.
+Only used if \code{data} must be coerced to a \code{response_matrix} object}
+
+\item{L_codes}{A vector giving the values corresponding to an "L" party
+affiliation (default is 100 -- Voteview's Democrat party code).
+Only used if \code{data} must be coerced to a \code{response_matrix} object}
+
+\item{R_codes}{A vector giving the values corresponding to an "R" party
+affiliation (default is 200 -- Voteview's Republican party code).
+Only used if \code{data} must be coerced to a \code{response_matrix} object}
 
 \item{yea_codes}{A vector giving the values corresponding to a "yea"
 response (default is 1); only used if \code{data} must be coerced to a
@@ -34,6 +49,10 @@ covariance function for the Gaussian process prior; default is 1}
 
 \item{ell}{A numeric vector of length one giving the length scale for the
 covariance function for the Gaussian process prior; default is 1}
+
+\item{theta_init}{A vector of length \code{nrow(data)} giving initial values
+for the respondent ideology parameters; if NULL (the default), the initial
+values are drawn from the parameters' prior distributions.}
 }
 \value{
 A list of length two; the first element, "theta", is a matrix of
@@ -79,7 +98,8 @@ responses <- responses[ , -unanimous_items]
 ## Generate samples
 ## (We just use 1 iteration for a short-running toy example here;
 ##  try 500-1000+ to fully demo the sampler's behavior)
-samples <- gpirtMCMC(responses, 1, 0)
+party_affiliations <- rep(c(100, 200), each = n/2, length.out = n)
+samples <- gpirtMCMC(responses, 1, 0, party_affiliations)
 str(samples)
 
 }

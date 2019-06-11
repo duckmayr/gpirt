@@ -1,23 +1,23 @@
 context("response_matrix")
 
-#
-# Specify objects needed for tests.
-#
+## Specify objects needed for tests.
+### Simple matrices and dataframes with single yea and nay codes
 x   <- c(1, 0, 1, 1, 0, NA)
 ex1 <- matrix(x, nrow = 3)
 ex2 <- data.frame(x1 = x[1:3], x2 = x[4:6])
-result1 <- response_matrix(ex1)
-result2 <- response_matrix(ex2)
-## Multiple "yea" codes
+result1 <- response_matrix(ex1, rep(100, 3))
+result2 <- response_matrix(ex2, rep(100, 3))
+### Multiple "yea" codes
 x   <- c(1, 0, 2, 3, 0, NA)
 ex3 <- matrix(x, nrow = 3)
 ex4 <- data.frame(x1 = x[1:3], x2 = x[4:6])
-result3 <- response_matrix(ex3, yea_codes = 1:3)
-result4 <- response_matrix(ex4, yea_codes = 1:3)
-## Dataframe with factors
+result3 <- response_matrix(ex3, rep(100, 3), yea_codes = 1:3)
+result4 <- response_matrix(ex4, rep(100, 3), yea_codes = 1:3)
+### Dataframe with factors
 ex5 <- data.frame(x = factor(c("Yea", "Nay", "Yea")),
                   y = factor(c("Yea", "Nay", NA)))
-result5 <- response_matrix(ex5, yea_codes = "Yea", nay_codes = "Nay")
+result5 <- response_matrix(ex5, rep(100, 3),
+                           yea_codes = "Yea", nay_codes = "Nay")
 ex6 <- data.frame(x = factor(c("Yea", "Nay", "Yes")),
                   y = factor(c("Yea", "Nay", NA)))
 
@@ -41,7 +41,7 @@ ex6 <- data.frame(x = factor(c("Yea", "Nay", "Yes")),
 #   (2) a non-empty data frame,
 #   (3) a dataframe containing entries with at most 3 different types of codes,
 #   IF yea_codes, nay_codes, AND missing_codes ARE *NOT* SPECIFIED BY THE USER:
-#       (4) entries must be from {1,0,NA} 
+#       (4) entries must be from {1,0,NA}
 #   ELSE:
 #       (5) yea_codes != nay_codes != missing_codes
 #       (6) entries must be from {yea_codes, nay_codes, missing_codes}
@@ -56,8 +56,12 @@ test_that("response_matrix functions properly", {
     expect_setequal(c(result4), c(1,0, NA))
     expect_s3_class(result5, "response_matrix")
     expect_setequal(c(result5), c(1,0, NA))
-    expect_warning(response_matrix(ex6, yea_codes = "Yea", nay_codes = "Nay"))
+    expect_warning(response_matrix(ex6, rep(100, 3),
+                                   yea_codes = "Yea", nay_codes = "Nay"))
     expect_error(response_matrix(list(1)), "Conversion from lists")
+    expect_error(response_matrix(ex1, c(100, 200, 300)), "valid party")
+    expect_error(response_matrix(ex1, c(100, 100, 100), R_codes = c(100, 200)),
+                 "provide unique codes")
 })
 
 
@@ -82,7 +86,7 @@ test_that("is.response_matrix functions properly", {
 # Add documentation of unit testing goals for as.response_matrix.
 #
 test_that("as.response_matrix functions properly", {
-    expect_identical(as.response_matrix(ex1), result1)
+    expect_identical(as.response_matrix(ex1, rep(100, 3)), result1)
     expect_identical(as.response_matrix(result1), result1)
 })
 

@@ -6,16 +6,26 @@
 \alias{as.response_matrix}
 \title{Create an object of class response_matrix}
 \usage{
-response_matrix(data, yea_codes = 1, nay_codes = 0,
-  missing_codes = NA)
+response_matrix(data, party_affiliation, L_codes = 100, R_codes = 200,
+  yea_codes = 1, nay_codes = 0, missing_codes = NA)
 
 is.response_matrix(x)
 
-as.response_matrix(x, yea_codes = 1, nay_codes = 0,
-  missing_codes = NA)
+as.response_matrix(x, party_affiliation, L_codes = 100, R_codes = 200,
+  yea_codes = 1, nay_codes = 0, missing_codes = NA)
 }
 \arguments{
 \item{data}{A matrix or dataframe of responses}
+
+\item{party_affiliation}{A vector of length \code{nrow(data)} identifying
+each respondent as being in party L or R. Respondents' ideology
+parameters' prior means are -1 for L party members and 1 for R members.}
+
+\item{L_codes}{A vector giving the values corresponding to an "L" party
+affiliation (default is 100 -- Voteview's Democrat party code)}
+
+\item{R_codes}{A vector giving the values corresponding to an "R" party
+affiliation (default is 200 -- Voteview's Republican party code)}
 
 \item{yea_codes}{A vector giving the values corresponding to a "yea"
 response (default is 1)}
@@ -39,21 +49,21 @@ its argument into a \code{response_matrix}.
 x   <- c(1, 0, 1, 1, 0, NA)
 ex1 <- matrix(x, nrow = 3)
 ex2 <- data.frame(x1 = x[1:3], x2 = x[4:6])
-response_matrix(ex1)
-response_matrix(ex2)
+response_matrix(ex1, rep(100, 3))
+response_matrix(ex2, rep(100, 3))
 ## Multiple "yea" codes
 x   <- c(1, 0, 2, 3, 0, NA)
 ex3 <- matrix(x, nrow = 3)
 ex4 <- data.frame(x1 = x[1:3], x2 = x[4:6])
-response_matrix(ex3, yea_codes = 1:3)
-response_matrix(ex4, yea_codes = 1:3)
+response_matrix(ex3, c(100, 200, 100), yea_codes = 1:3)
+response_matrix(ex4, c(100, 200, 100), yea_codes = 1:3)
 ## Dataframe with factors
 ex5 <- data.frame(x = factor(c("Yea", "Nay", "Yea")),
                   y = factor(c("Yea", "Nay", NA)))
-y <- response_matrix(ex5, yea_codes = "Yea", nay_codes = "Nay")
+y <- response_matrix(ex5, rep(100, 3), yea_codes = "Yea", nay_codes = "Nay")
 is.response_matrix(ex5)
 is.response_matrix(y)
-as.response_matrix(ex5, yea_codes = "Yea", nay_codes = "Nay")
-as.response_matrix(y,   yea_codes = "Yea", nay_codes = "Nay")
+as.response_matrix(ex5, rep(100, 3), yea_codes = "Yea", nay_codes = "Nay")
+as.response_matrix(y,   rep(100, 3), yea_codes = "Yea", nay_codes = "Nay")
 
 }
