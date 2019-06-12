@@ -7,8 +7,8 @@
 using namespace Rcpp;
 
 // gpirtMCMC
-Rcpp::List gpirtMCMC(const arma::imat& y, arma::vec theta, arma::ivec party, const int sample_iterations, const int burn_iterations, const double L_mean, const double R_mean, const double sf, const double ell);
-RcppExport SEXP _gpirt_gpirtMCMC(SEXP ySEXP, SEXP thetaSEXP, SEXP partySEXP, SEXP sample_iterationsSEXP, SEXP burn_iterationsSEXP, SEXP L_meanSEXP, SEXP R_meanSEXP, SEXP sfSEXP, SEXP ellSEXP) {
+Rcpp::List gpirtMCMC(const arma::imat& y, arma::vec theta, arma::ivec party, const int sample_iterations, const int burn_iterations, const double L_mean, const double R_mean, const double sf_sq, const double ell_sq_reciprocal);
+RcppExport SEXP _gpirt_gpirtMCMC(SEXP ySEXP, SEXP thetaSEXP, SEXP partySEXP, SEXP sample_iterationsSEXP, SEXP burn_iterationsSEXP, SEXP L_meanSEXP, SEXP R_meanSEXP, SEXP sf_sqSEXP, SEXP ell_sq_reciprocalSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -19,9 +19,9 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const int >::type burn_iterations(burn_iterationsSEXP);
     Rcpp::traits::input_parameter< const double >::type L_mean(L_meanSEXP);
     Rcpp::traits::input_parameter< const double >::type R_mean(R_meanSEXP);
-    Rcpp::traits::input_parameter< const double >::type sf(sfSEXP);
-    Rcpp::traits::input_parameter< const double >::type ell(ellSEXP);
-    rcpp_result_gen = Rcpp::wrap(gpirtMCMC(y, theta, party, sample_iterations, burn_iterations, L_mean, R_mean, sf, ell));
+    Rcpp::traits::input_parameter< const double >::type sf_sq(sf_sqSEXP);
+    Rcpp::traits::input_parameter< const double >::type ell_sq_reciprocal(ell_sq_reciprocalSEXP);
+    rcpp_result_gen = Rcpp::wrap(gpirtMCMC(y, theta, party, sample_iterations, burn_iterations, L_mean, R_mean, sf_sq, ell_sq_reciprocal));
     return rcpp_result_gen;
 END_RCPP
 }

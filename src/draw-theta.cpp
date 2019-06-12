@@ -1,7 +1,7 @@
 #include "gpirt.h"
 
 arma::vec draw_theta(const arma::imat& y,
-                     const double ell, const double sf,
+                     const double ell_sq_reciprocal, const double sf_sq,
                      const arma::mat& f,
                      const arma::vec& theta,
                      const arma::vec& theta_star,
@@ -24,16 +24,16 @@ arma::vec draw_theta(const arma::imat& y,
         theta_not_i.shed_row(i);
         arma::mat f_not_i = f;
         f_not_i.shed_row(i);
-        arma::mat S00i = K(theta_not_i, theta_not_i, sf, ell);
+        arma::mat S00i = K(theta_not_i, theta_not_i, sf_sq, ell_sq_reciprocal);
         S00i.diag() += 0.000001;
-        S00i = S00i.i();
+        S00i = inv_sympd(S00i);
         for ( arma::uword k = 0; k < N; ++k ) {
             // For each value in theta_star,
             // get the log prior + the log likelihood
             th_star[0] = theta_star[k];
-            S01        = K(theta_not_i, th_star, sf, ell);
+            S01        = K(theta_not_i, th_star, sf_sq, ell_sq_reciprocal);
             S10_S00i   = S01.t() * S00i;
-            double S   = (sf * sf) - arma::as_scalar(S10_S00i * S01);
+            double S   = sf_sq - arma::as_scalar(S10_S00i * S01);
             if ( party[i] ) {
                 P[k] = R_prior[k];
             }

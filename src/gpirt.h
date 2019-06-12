@@ -7,7 +7,7 @@ arma::mat draw_f(const arma::mat& f, const arma::imat& y, const arma::mat& S);
 
 // Function to draw theta
 arma::vec draw_theta(const arma::imat& y,
-                     const double ell, const double sf,
+                     const double ell_sq_reciprocal, const double sf_sq,
                      const arma::mat& f,
                      const arma::vec& theta,
                      const arma::vec& theta_star,
@@ -16,7 +16,8 @@ arma::vec draw_theta(const arma::imat& y,
                      const arma::ivec& party);
 
 // Covariance function
-arma::mat K(const arma::vec& x1, const arma::vec& x2, double sf, double ell);
+arma::mat K(const arma::vec& x1, const arma::vec& x2,
+            const double sf_sq, const double ell_sq_reciprocal);
 
 // Likelihood function
 double ll(const arma::vec& f, const arma::ivec& y);

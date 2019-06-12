@@ -97,7 +97,7 @@ gpirtMCMC <- function(data, sample_iterations, burn_iterations,
     # Now we can call the C++ sampler function
     result <- .gpirtMCMC(data, theta_init, party_affiliations,
                          sample_iterations, burn_iterations,
-                         -1.0, 1.0, sf, ell)
+                         -1.0, 1.0, sf^2, (1 / (ell^2)))
     # And return the result
     return(result)
 }

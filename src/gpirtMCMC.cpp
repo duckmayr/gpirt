@@ -4,13 +4,13 @@
 Rcpp::List gpirtMCMC(const arma::imat& y, arma::vec theta, arma::ivec party,
                      const int sample_iterations, const int burn_iterations,
                      const double L_mean, const double R_mean,
-                     const double sf, const double ell) {
+                     const double sf_sq, const double ell_sq_reciprocal) {
     int n = y.n_rows;
     int m = y.n_cols;
     int total_iterations = sample_iterations + burn_iterations;
     // Draw initial values of theta and f
     arma::vec mean_zeros = arma::zeros<arma::vec>(n);
-    arma::mat S = K(theta, theta, sf, ell);
+    arma::mat S = K(theta, theta, sf_sq, ell_sq_reciprocal);
     S.diag() += 0.001;
     arma::mat f = rmvnorm(m, mean_zeros, S).t();
     // Setup grid
@@ -39,8 +39,9 @@ Rcpp::List gpirtMCMC(const arma::imat& y, arma::vec theta, arma::ivec party,
         Rcpp::checkUserInterrupt();
         // Draw new parameter values
         f = draw_f(f, y, S);
-        theta = draw_theta(y, ell, sf, f, theta, theta_star, L_prior, R_prior, party);
-        S = K(theta, theta, sf, ell);
+        theta = draw_theta(y, ell_sq_reciprocal, sf_sq, f, theta, theta_star,
+                           L_prior, R_prior, party);
+        S = K(theta, theta, sf_sq, ell_sq_reciprocal);
         S.diag() += 0.001;
         // Store draws
         if ( iter >= burn_iterations ) {
