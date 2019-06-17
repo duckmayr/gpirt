@@ -1,26 +1,23 @@
 #include "gpirt.h"
 
 arma::vec draw_theta(const int n, const arma::vec& theta_star,
-                     const arma::mat& y, const arma::vec& theta0_prior,
-                     const arma::vec& thetai_prior, const arma::mat& fstar) {
+                     const arma::mat& y, const arma::mat& theta_prior,
+                     const arma::uvec& groups, const arma::mat& fstar) {
     int N = theta_star.n_elem;
     int m = fstar.n_cols;
     arma::vec result(n);
     arma::vec responses(m);
+    arma::vec theta_i_prior(N);
     arma::vec fk(m);
     arma::vec P(N);
     for ( arma::uword i = 0; i < n; ++i ) {
         // For each respondent,
-        responses = y.row(i).t();
+        responses     = y.row(i).t();
+        theta_i_prior = theta_prior.col(groups[i]);
         for ( arma::uword k = 0; k < N; ++k ) {
             // For each value in theta_star,
             // get the log prior + the log likelihood
-            if ( i == 0 ) {
-                P[k] = theta0_prior[k];
-            }
-            else {
-                P[k] = thetai_prior[k];
-            }
+            P[k] = theta_i_prior[k];
             fk = fstar.row(k).t();
             P[k] += ll(fk, responses);
         }

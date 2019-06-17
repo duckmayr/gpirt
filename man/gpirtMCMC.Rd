@@ -4,8 +4,10 @@
 \alias{gpirtMCMC}
 \title{Gaussian Process IRT MCMC}
 \usage{
-gpirtMCMC(data, sample_iterations, burn_iterations, yea_codes = 1,
-  nay_codes = 0, missing_codes = NA, sf = 1, ell = 1)
+gpirtMCMC(data, sample_iterations, burn_iterations, vote_codes = list(yea
+  = 1:3, nay = 4:6, missing = c(0, 7:9, NA)), group = rep(0, nrow(data)),
+  prior_means = list(`0` = 0, `100` = -1, `200` = 1), sf = 1,
+  ell = 1, theta_init = NULL)
 }
 \arguments{
 \item{data}{An object of class \code{\link{response_matrix}},
@@ -17,29 +19,37 @@ of samples to record}
 \item{burn_iterations}{An integer vector of length one giving the number of
 burn in (unrecorded) iterations}
 
-\item{yea_codes}{A vector giving the values corresponding to a "yea"
-response (default is 1); only used if \code{data} must be coerced to a
-\code{response_matrix} object}
+\item{vote_codes}{A named list giving the mapping from recorded responses to
+{-1, 1, NA}. An element named "yea" gives the responses that should be
+coded as 1, an element named "nay" gives the repsonses that should be coded
+as -1, and an element named "missing" gives responses that should be NA;
+only used if \code{data} must be coerced to a \code{response_matrix} object}
 
-\item{nay_codes}{A vector giving the values corresponding to a "nay"
-response (default is 0); only used if \code{data} must be coerced to a
-\code{response_matrix} object}
+\item{group}{An integer or character vector, or factor, of length
+\code{nrow(data)} identifying the group each respondent;
+only used if \code{data} must be coerced to a \code{response_matrix} object}
 
-\item{missing_codes}{A vector giving the values corresponding to a missing
-response (default is NA); only used if \code{data} must be coerced to
-\code{response_matrix} object}
+\item{prior_means}{A list of \code{length(group)} giving the prior mean
+for the ideology parameter for the respondents in each group or a vector
+of length \code{nrow(data)} giving the prior mean for each respondent's
+ideology parameter;
+only used if \code{data} must be coerced to a \code{response_matrix} object}
 
 \item{sf}{A numeric vector of length one giving the scale factor for the
 covariance function for the Gaussian process prior; default is 1}
 
 \item{ell}{A numeric vector of length one giving the length scale for the
 covariance function for the Gaussian process prior; default is 1}
+
+\item{theta_init}{A vector of length \code{nrow(data)} giving initial values
+for the respondent ideology parameters; if NULL (the default), the initial
+values are drawn from the parameters' prior distributions.}
 }
 \value{
 A list of length two; the first element, "theta", is a matrix of
-  dimensions sample_iterations x n giving the theta parameter draws, and the
-  second element, "f", is an array of dimensions n x m x sample_iterations
-  giving the f(theta) parameter draws.
+  theta parameter draws (with dimensions (sample_iterations + 1) x n; the
+  initial values are included), and the second element, "f", is an array of
+  the f parameter draws (with dimensions n x m x (sample_iterations + 1)).
 }
 \description{
 Provides posterior samples for the GP-IRT.
@@ -79,7 +89,8 @@ responses <- responses[ , -unanimous_items]
 ## Generate samples
 ## (We just use 1 iteration for a short-running toy example here;
 ##  try 500-1000+ to fully demo the sampler's behavior)
-samples <- gpirtMCMC(responses, 1, 0)
+samples <- gpirtMCMC(responses, 1, 0, vote_codes = list(yea = 1, nay = 0,
+                                                        missing = NA))
 str(samples)
 
 }
