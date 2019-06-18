@@ -61,7 +61,7 @@ test_that("response_matrix functions properly", {
     expect_setequal(c(result4), c(1,-1, NA))
     expect_s3_class(result5, "response_matrix")
     expect_setequal(c(result5), c(1,-1, NA))
-    expect_warning(response_matrix(ex6, response_codes = list(yea = "Yea",
+    expect_message(response_matrix(ex6, response_codes = list(yea = "Yea",
                                                               nay = "Nay",
                                                               missing = NA)))
     expect_error(response_matrix(list(1)), "Conversion from lists")
