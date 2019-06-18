@@ -7,6 +7,7 @@ vignette: >
   %\VignetteIndexEntry{gpirt Vignette}
   %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
+bibliography: vignette-references.bib
 ---
 
 ```{r, include = FALSE}
@@ -16,60 +17,197 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r setup}
-library(gpirt)
-```
-
 # Introduction
 
-The purpose of this vignette is to detail the mathematics of the algorithms used in the gpirt package.
+The `gpirt` package provides an MCMC sampler and related tools for a
+**G**aussian **P**rocess **I**tem **R**esponse **T**heoretic (GP-IRT) model.
+Unlike other IRT models that make strong assumptions about the functional form
+of the "item response function," or the function mapping respondents' latent
+trait to their response to items, we place a GP prior over the distribution of
+functions mapping latent traits to responses, and simulataneously learn these
+functions and the respondents' latent traits.
 
-We have currently gotten rid of the half normal prior on one of the first theta values initialized, but we don't have informative priors on party labels yet. Hence the uncertainty seen in the plots that JB is producing.
+For readers unfamiliar with Gaussian processes, we refer them @RW:2006,
+available [here](http://www.gaussianprocess.org/gpml/chapters/).
+In what follows, we first detail our MCMC algorithm for sampling the model
+parameters' posterior distribution.
+We then walk through a simple but complete example, from data preparation, to
+prior specification and sampling, and analysis of results.
 
 # Algorithm
 
-### Notation
-$n$ is the number of respondents, indexed by $i$.
-$m$ is the number of items, indexed by $j$.
-$T$ is the number of stored iterations (burn in not counted), indexed by $t$.
+We include at the outset, a brief explanation of the notation used throughout:
 
-$y$ is an $n \times m$ dimension matrix of respondents by item responses.
-$\theta$ is an $n \times d$ dimension matrix of respondents by ideological dimension ($d=1$).
-$f$ is a $n \times m$ matrix that stores the current value of the latent function at any point in the algorithm. $f$ is at times denoted by the collection of values $\lbrace f_{j} \rbrace$.
-$\theta$ is a $n \times 1$ vector that stores the current value of the $\theta$s at any point in the algorithm. 
+- $n$ is the number of respondents, indexed by $i$.
+- $m$ is the number of items, indexed by $j$.
+- $T$ is the number of iterations, indexed by $t$.
+- $y$ is an $n \times m$ dimension matrix of each respondent's response to each
+  item.
+- $\theta$ is the $n \times d$ dimension matrix of respondents' latent traits,
+  which we will commonly call ideology (as would be the case in the authors'
+  substantive applications -- political science). Currently the algorithm is
+  only implemented for $d = 1$.
+- $f_j$ is the latent function mapping ideology to responses for item $j$,
+  through a sigmoid function; i.e., $\Pr(y_{ij} = 1) = \sigma(f_j(\theta_i))$.
+- $f = \lbrace f_{j} \rbrace$.
+  In our code, we refer to the $n \times m$ matrix storing the current draw of
+  $\lbrace f_j(\theta) \rbrace$ as `f`.
 
-Set initial parameter values. Superscripts denote iterations of the algorithm. Subscripts denote respondents/items.
+Superscripts denote iterations of the algorithm and subscripts denote
+respondents/items.
+For example, $\theta_i^t$ is the value drawn for respondent $i$'s ideology
+parameter at iteration $t$ of our algorithm.
 
-### Algorithms
+## Priors
 
-_Main Algorithm_
+We place a normal prior over each $\theta_i$;
+the variance for all ideology parameter priors is 1,
+but the prior means may vary.
+Specifically, we assume (at least some of) the respondents can be classified
+into different groups (in our political science application, parties),
+and allow the user to specify a prior mean $\mu_g$ for each group $g$.
+If a group or respondent is not assigned a prior mean by the user,
+we assume $\mu_g = 0$ for that $g$.
+
+We place a GP prior over the $f_j$, with a mean function of zero,
+and covariance given by the squared exponential covariance function
+(also called the radial basis function)
+
+$$
+K(\theta, \theta') = \sigma^2
+\exp\left(-\frac{\| \theta - \theta' \|^2}{2\ell^2}\right),
+$$
+
+where $\ell$ is the *length scale*,
+governing how quickly $f_j$ can change,
+and $\sigma$ is the *scale factor*, or the function variance of $f_j$.
+
+## MCMC Algorithm
+
+Our MCMC algorithm proceeds as follows:
+
 1. Initialize $f$ and $\theta$: $(f^{0}, \theta^{0})$.
-1. (Option A) Let the user specify starting values for $\theta$.
-1. (Option B) Let the user manually specify priors on $\theta$.
-1. For $t = 1,...,T$:
-    1. Use the elliptical slice sampler (ESS) to draw $f^{t}$ given $\theta^{t-1}$, $f^{t-1}$, and $y$.
-    1. Compute the posterior of $\theta$ on a fine grid. Use inverse transform sampling to draw $\theta^{t}$ given $f^{t}$ and $y$. 
-    1. Store $f^{t}$ and $\theta^{t}$ in $f\_draws$ and $theta\_draws$ respectively.
+    a. We allow users to specify initial values for $\theta$; otherwise,
+       $\theta^0$ is drawn from the prior distributions of the $\theta_i$.
+    b. Draw the $f_j$ from their prior distribution, i.e. a normal distribution
+       with mean zero and covariance $K(\theta^0, \theta^0)$.
+2. For $t = 1, ..., T$:
+    a. Use an elliptical slice sampler to draw $f^t$ given $\theta^{t-1}$,
+       $f^{t-1}$, and $y$. For more details on elliptical slice samplers,
+       please consult @ESS,
+       available [here](https://homepages.inf.ed.ac.uk/imurray2/pub/10ess/).
+    b. Given $f^t$ and $\theta^{t-1}$, draw $f^* = \{ f_j(\theta^*) \}$
+       for $\theta^* = \{-5, -4.99, \ldots, 4.99, 5\}$ from
+       $$
+       f_j^t(\theta^*) \sim \mathcal{N}(
+         K(\theta^*, \theta^{t-1})\, K(\theta^{t-1}, \theta^{t-1})^{-1}f_j^t,\
+         K(\theta^*, \theta^*) - 
+         K(\theta^*, \theta^{t-1})\,
+         K(\theta^{t-1}, \theta^{t-1})^{-1}\,
+         K(\theta^{t-1}, \theta^*)
+         )
+       $$
+       (see @RW:2006, equation 2.19).
+    c. Use inverse transform sampling to draw $\theta^t$ by brute-force
+       computation of the conditional posterior on the grid $\theta^*$.
 
-_Supporting Algorithm (1)_
-For $i=1,...,n$:
-    1. Sample $\theta^{t}_{i} \sum p(\theta_{i} | \lbrace f^{t}_{\neg i, j} \rbrace, \theta^{t}_{\neg i}) \propto p(\theta^{t}_{i})p(y | \theta, \lbrace f^{t}_{\neg i, j} \rbrace)$.\\
-    p(\theta^{t}_{i})p(y | \theta, \lbrace f^{t}_{\neg i, j} \rbrace) = p(\theta^{t}_{i}) \int p(y | \theta, \lbrace f^{t}_{\neg i, j} \rbrace)p(f_{1i|...})p(f_{2i}|...)...df_{1i}df_{2i}...\\
-    = \sum_{j} \text{log} \Phi \left( \frac{\mu_{j}}{\sqrt{1 + \sigma^{2}_{j}}} \right)\\
-    where $\mu_{j}$ and \sigma^{2}_{j} are given by [...(2.19) in GPML by Rasmussen and Williams].
-    1. Carry out inverse transform sampling. Since $p(\theta_{i} | y, \lbrace f^{t}_{\neg i, j} \rbrace, \theta^{t}_{\neg i}) \propto \text{log} \phi(\theta_{i}) + \sum_{j} \text{log} \Phi \left( \frac{\mu_{j}}{\sqrt{1 + \sigma^{2}_{j}}} \right)$, calculate the posterior over a fine grid for $\theta^{*}_{i} \in \lbrace -5.0, -4.99, ..., 4.99, 5.0 \rbrace$\\.
-    
-_Supporting Algorithm (2) -- Inverse Transform Sampling_
-For $\theta^{*}_{i} \in \lbrace -5.0, -4.99, ..., 4.99, 5.0 \rbrace$:
+# Example
 
-    1. Calculate $\text{log} \phi(\theta_{i}) + \sum_{j} \text{log} \Phi \left( \frac{\mu_{j}}{\sqrt{1 + \sigma^{2}_{j}}} \right)$. This gives the posterior log pdf of $\theta^{*}_{i}$ over the grid -- $\lbrace \text{log} p(-5.0 | ...), \text{log} p(-4.9 | ...), ..., \text{log} p(4.9| ...), \text{log} p(5.0|...)\rbrace$.
-    1. Exponentiate each value to obtain the posterior pdf -- $\lbrace p(-5.0 | ...), p(-4.9 | ...), ..., p(4.9| ...), p(5.0|...) \rbrace$.
-    1. For each value in the posterior pdf, calculate the cumulative sum up to that value and scale to obtain the posterior cdf -- $\lbrace p(-5.0 | ...), p(-5.0 | ...) + p(-4.9 | ...), p(-5.0 | ...) + p(-4.9 | ...) + p(-4.8 | ...), ... \rbrace$ with representative element $CDF_{i}$. Scale each $CDF_{i}$ according to $\frac{CDF_{i} - min(CDF_{i})}{max(CDF_{i}) - min(CDF_{i})}$, which generates an approximation to the CDF.
-    1. Sample from the full conditional (the posterior CDF in the preceding step) through Inverse Transform Sampling. Generate a random draw from a $\text{Uniform}{[0,1]}$ distribution, denoted by $p$. If we are at algorithm step $t$ and sub-algorithm stage $i$ from $1,...,n$ where the preceding $1,...,i-1$ samples $\theta^{t}_{1}, ..., \theta^{t}_{i-1}$ have already been generated, then the sample $\theta^{t}_{i}$ from the full conditional is $CDF^{-1}(p) = \lbrace \theta^{*}_{k} : CDF_{k} = min \lbrace CDF : CDF \geq p \rbrace \rbrace$, which is single valued. 
+We will use an example from the U.S. Senate.
+Congressional voting data is available from [Voteview](https://voteview.com/)
+[@voteview-data].
+First let's download the data:
 
-# Details
+```{r get_data}
+base_url  <- "https://voteview.com/static/data/out/"
+vote_data <- read.csv(paste0(base_url, "votes/S116_votes.csv"),
+                      stringsAsFactors = FALSE)
+```
 
-(Additional notes put here until I better structure the above.)
+The data from Voteview is in a tidy format,^[See `tidyr`'s "Tidy Data" Vignette]
+but because we want a matrix of responses, we will actually have to make it messy.
+I'll present both a base R method of doing so, as well as a commented-out
+`tidyverse` solution:
 
-$\mathbb{P}(y_{ij} = 1) = \sum_{j} \text{log} \Phi \left( \frac{\mu_{j}}{\sqrt{1 + \sigma^{2}_{j}}} \right)$
+```{r reshape_data}
+item_ids   <- unique(vote_data$rollnumber)
+member_ids <- unique(vote_data$icpsr)
+n          <- length(member_ids)
+m          <- length(item_ids)
+responses  <- matrix(nrow = n, ncol = m, dimnames = list(member_ids, item_ids))
+for ( j in 1:m ) {
+    item_idx        <- which(vote_data$rollnumber == item_ids[j])
+    responses[ , j] <- vote_data$cast_code[item_idx]
+}
+## Tidyverse solution:
+# library(dplyr)
+# library(tidyr)
+# responses <- vote_data %>%
+#     ## We only need the vote identifier, member identifier, and vote code:
+#     select(icpsr, rollnumber, cast_code) %>%
+#     ## Then we spread the data out:
+#     spread(icpsr, cast_code)
+# rownames(responses) <- responses$rollnumber
+# responses <- t(responses[ , -1])
+```
 
+Now, recall that for our $\theta_i$ priors, we can specify prior means by group.
+This is useful for identifying the directionality of the space, particularly
+when as in politics, we can readily say which groups should be on the "left"
+and which groups should be on the "right" (though note that with a standard
+deviation of one, this certainly does not outright prevent those in the "left"
+group from ending up with a positive ideology estimate, and vice versa).
+So, we use information about the Senators' party affilliation to specify
+their group and create a `response_matrix` object:
+
+```{r make_response_matrix}
+member_data <- read.csv(paste0(base_url, "members/S116_members.csv"),
+                        stringsAsFactors = FALSE)
+icpsrs      <- as.character(member_data$icpsr)
+party_codes <- member_data$party_code[match(member_ids, icpsrs)]
+library(gpirt)
+responses   <- as.response_matrix(responses, group = party_codes)
+str(responses)
+```
+
+Note the messages printed by `as.response_matrix()`;
+the function automatically handles unanimous items for us
+(and lets us know which problematic items had to be discarded),
+and specifies a prior mean of 0 for any groups not specified.
+The default `prior_means` argument specifies that groups labelled
+`100` (Voteview's code for Democrats) have a prior mean of -1,
+those labelled `200` (Voteview's code for Republicans) have a prior mean of 1,
+and those labelled `0` have a prior mean of 0.
+We encountered an unspecified group, `328` (Voteview's code for Independents),
+and by default specified a prior mean of 0 for that group.
+
+Now we can run our sampler:
+
+```{r run_sampler, eval=FALSE}
+set.seed(1119) # For reproducibility
+samples <- gpirtMCMC(responses, sample_iterations = 5000, burn_iterations = 0)
+str(samples)
+```
+
+Then we can get estimates of our ideology parameters without ever having to
+assume the precise functional form between Senators' ideology and their roll
+call vote responses:
+
+```{r plot_estimates, eval=FALSE}
+theta_hat <- apply(samples[["theta"]], 2, mean)
+nominate1 <- member_data$nominate_dim1[match(rownames(responses), icpsrs)]
+plot_colors <- ifelse(party_codes == 100, "#0072b280",
+                      ifelse(party_codes == 200, "#d55e0080", "#80808080"))
+plot(nominate1, theta_hat, pch = 19, col = plot_colors,
+     ylab = "", xlab = "", xaxt = "n", yaxt = "n")
+axis(1, tick = FALSE, line = -0.75)
+axis(2, tick = FALSE, line = -0.75)
+mtext("NOMINATE-2D Dimension 1 (Voteview)", 1, 1.5)
+mtext(expression(hat(theta)), 2, 1.5)
+text(min(nominate1), max(theta_hat), adj = 0:1,
+     paste("Correlation:", round(cor(theta_hat, nominate1), 3)))
+legend("bottomright", bty = "n", pch = 19, col = unique(plot_colors),
+       legend = c("Republican", "Democrat", "Independent"))
+```
+
+# References
