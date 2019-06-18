@@ -6,18 +6,23 @@ context("response_matrix")
 x   <- c(1, 0, 1, 1, 0, NA)
 ex1 <- matrix(x, nrow = 3)
 ex2 <- data.frame(x1 = x[1:3], x2 = x[4:6])
-result1 <- response_matrix(ex1)
-result2 <- response_matrix(ex2)
+result1 <- response_matrix(ex1, response_codes = list(yea = 1, nay = 0,
+                                                      missing = NA))
+result2 <- response_matrix(ex2, response_codes = list(yea = 1, nay = 0,
+                                                      missing = NA))
 ## Multiple "yea" codes
 x   <- c(1, -1, 2, 3, -1, NA)
 ex3 <- matrix(x, nrow = 3)
 ex4 <- data.frame(x1 = x[1:3], x2 = x[4:6])
-result3 <- response_matrix(ex3, yea_codes = 1:3)
-result4 <- response_matrix(ex4, yea_codes = 1:3)
+result3 <- response_matrix(ex3, response_codes = list(yea = 1:3, nay = -1,
+                                                      missing = NA))
+result4 <- response_matrix(ex4, response_codes = list(yea = 1:3, nay = -1,
+                                                      missing = NA))
 ## Dataframe with factors
 ex5 <- data.frame(x = factor(c("Yea", "Nay", "Yea")),
                   y = factor(c("Yea", "Nay", NA)))
-result5 <- response_matrix(ex5, yea_codes = "Yea", nay_codes = "Nay")
+result5 <- response_matrix(ex5, response_codes = list(yea = "Yea", nay = "Nay",
+                                                      missing = NA))
 ex6 <- data.frame(x = factor(c("Yea", "Nay", "Yes")),
                   y = factor(c("Yea", "Nay", NA)))
 
@@ -41,7 +46,7 @@ ex6 <- data.frame(x = factor(c("Yea", "Nay", "Yes")),
 #   (2) a non-empty data frame,
 #   (3) a dataframe containing entries with at most 3 different types of codes,
 #   IF yea_codes, nay_codes, AND missing_codes ARE *NOT* SPECIFIED BY THE USER:
-#       (4) entries must be from {1,0,NA} 
+#       (4) entries must be from {1,0,NA}
 #   ELSE:
 #       (5) yea_codes != nay_codes != missing_codes
 #       (6) entries must be from {yea_codes, nay_codes, missing_codes}
@@ -56,7 +61,9 @@ test_that("response_matrix functions properly", {
     expect_setequal(c(result4), c(1,-1, NA))
     expect_s3_class(result5, "response_matrix")
     expect_setequal(c(result5), c(1,-1, NA))
-    expect_warning(response_matrix(ex6, yea_codes = "Yea", nay_codes = "Nay"))
+    expect_message(response_matrix(ex6, response_codes = list(yea = "Yea",
+                                                              nay = "Nay",
+                                                              missing = NA)))
     expect_error(response_matrix(list(1)), "Conversion from lists")
 })
 
@@ -82,8 +89,14 @@ test_that("is.response_matrix functions properly", {
 # Add documentation of unit testing goals for as.response_matrix.
 #
 test_that("as.response_matrix functions properly", {
-    expect_identical(as.response_matrix(ex1), result1)
-    expect_identical(as.response_matrix(result1), result1)
+    expect_identical(as.response_matrix(ex1,
+                                        response_codes = list(yea = 1, nay = 0,
+                                                              missing = NA)),
+                     result1)
+    expect_identical(as.response_matrix(result1,
+                                        response_codes = list(yea = 1, nay = 0,
+                                                              missing = NA)),
+                     result1)
 })
 
 

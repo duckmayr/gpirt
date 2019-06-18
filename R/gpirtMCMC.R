@@ -8,24 +8,31 @@
 #'   of samples to record
 #' @param burn_iterations An integer vector of length one giving the number of
 #'   burn in (unrecorded) iterations
-#' @param yea_codes A vector giving the values corresponding to a "yea"
-#'   response (default is 1); only used if \code{data} must be coerced to a
-#'   \code{response_matrix} object
-#' @param nay_codes A vector giving the values corresponding to a "nay"
-#'   response (default is 0); only used if \code{data} must be coerced to a
-#'   \code{response_matrix} object
-#' @param missing_codes A vector giving the values corresponding to a missing
-#'   response (default is NA); only used if \code{data} must be coerced to
-#'   \code{response_matrix} object
+#' @param vote_codes A named list giving the mapping from recorded responses to
+#'   {-1, 1, NA}. An element named "yea" gives the responses that should be
+#'   coded as 1, an element named "nay" gives the repsonses that should be coded
+#'   as -1, and an element named "missing" gives responses that should be NA;
+#'   only used if \code{data} must be coerced to a \code{response_matrix} object
+#' @param group An integer or character vector, or factor, of length
+#'   \code{nrow(data)} identifying the group each respondent;
+#'   only used if \code{data} must be coerced to a \code{response_matrix} object
+#' @param prior_means A list of \code{length(group)} giving the prior mean
+#'   for the ideology parameter for the respondents in each group or a vector
+#'   of length \code{nrow(data)} giving the prior mean for each respondent's
+#'   ideology parameter;
+#'   only used if \code{data} must be coerced to a \code{response_matrix} object
 #' @param sf A numeric vector of length one giving the scale factor for the
 #'   covariance function for the Gaussian process prior; default is 1
 #' @param ell A numeric vector of length one giving the length scale for the
 #'   covariance function for the Gaussian process prior; default is 1
+#' @param theta_init A vector of length \code{nrow(data)} giving initial values
+#'   for the respondent ideology parameters; if NULL (the default), the initial
+#'   values are drawn from the parameters' prior distributions.
 #'
 #' @return A list of length two; the first element, "theta", is a matrix of
-#'   dimensions sample_iterations x n giving the theta parameter draws, and the
-#'   second element, "f", is an array of dimensions n x m x sample_iterations
-#'   giving the f(theta) parameter draws.
+#'   theta parameter draws (with dimensions (sample_iterations + 1) x n; the
+#'   initial values are included), and the second element, "f", is an array of
+#'   the f parameter draws (with dimensions n x m x (sample_iterations + 1)).
 #'
 #' @examples
 #' ilogit <- function(x) 1 / (1 + exp(-x)) # inverse logit function
@@ -62,17 +69,37 @@
 #' ## Generate samples
 #' ## (We just use 1 iteration for a short-running toy example here;
 #' ##  try 500-1000+ to fully demo the sampler's behavior)
-#' samples <- gpirtMCMC(responses, 1, 0)
+#' samples <- gpirtMCMC(responses, 1, 0, vote_codes = list(yea = 1, nay = 0,
+#'                                                         missing = NA))
 #' str(samples)
 #'
 #' @export
 gpirtMCMC <- function(data, sample_iterations, burn_iterations,
-                      yea_codes = 1, nay_codes = 0, missing_codes = NA,
-                      sf = 1, ell = 1) {
+                      vote_codes = list(yea = 1:3, nay = 4:6,
+                                        missing = c(0, 7:9, NA)),
+                      group = rep(0, nrow(data)),
+                      prior_means = list(`0` = 0, `100` = -1, `200` = 1),
+                      sf = 1, ell = 1, theta_init = NULL) {
     # First we make sure our data are in the proper format:
-    data <- as.response_matrix(data, yea_codes, nay_codes, missing_codes)
+    data <- as.response_matrix(data, vote_codes, group, prior_means)
+    # We'll convert prior_means and group to something more useful for things
+    # on the C++ side
+    if ( is.list(attr(data, "prior_means")) ) {
+        mean_names <- names(attr(data, "prior_means"))
+        groups <- match(attr(data, "group"), mean_names) - 1
+        means  <- unlist(attr(data, "prior_means"))
+    } else {
+        means  <- unique(attr(data, "prior_means"))
+        groups <- match(attr(data, "prior_means"), means) - 1
+    }
+    prior_means <- unlist(prior_means[as.character(group)])
+    # Now we make sure we have initial values for theta
+    if ( is.null(theta_init) ) {
+        theta_init  <- rnorm(nrow(data), mean = prior_means)
+    }
     # Now we can call the C++ sampler function
-    result <- .gpirtMCMC(data, sample_iterations, burn_iterations, sf, ell)
+    result <- .gpirtMCMC(data, theta_init, sample_iterations, burn_iterations,
+                         means, groups, sf^2, 1 / (ell^2))
     # And return the result
     return(result)
 }

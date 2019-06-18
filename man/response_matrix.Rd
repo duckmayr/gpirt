@@ -6,25 +6,31 @@
 \alias{as.response_matrix}
 \title{Create an object of class response_matrix}
 \usage{
-response_matrix(data, yea_codes = 1, nay_codes = 0,
-  missing_codes = NA)
+response_matrix(data, response_codes = list(yea = 1:3, nay = 4:6, missing
+  = c(0, 7:9, NA)), group = rep(0, nrow(data)), prior_means = list(`0`
+  = 0, `100` = -1, `200` = 1))
 
 is.response_matrix(x)
 
-as.response_matrix(x, yea_codes = 1, nay_codes = 0,
-  missing_codes = NA)
+as.response_matrix(x, response_codes = list(yea = 1:3, nay = 4:6, missing
+  = c(0, 7:9, NA)), group = rep(0, nrow(x)), prior_means = list(`0` =
+  0, `100` = -1, `200` = 1))
 }
 \arguments{
 \item{data}{A matrix or dataframe of responses}
 
-\item{yea_codes}{A vector giving the values corresponding to a "yea"
-response (default is 1)}
+\item{response_codes}{A named list giving the mapping from recorded responses to
+{-1, 1, NA}. An element named "yea" gives the responses that should be
+coded as 1, an element named "nay" gives the repsonses that should be coded
+as -1, and an element named "missing" gives responses that should be NA}
 
-\item{nay_codes}{A vector giving the values corresponding to a "nay"
-response (default is 0)}
+\item{group}{An integer or character vector, or factor, of length
+\code{nrow(data)} identifying the group each respondent.}
 
-\item{missing_codes}{A vector giving the values corresponding to a missing
-response (default is NA)}
+\item{prior_means}{A list of \code{length(group)} giving the prior mean
+for the ideology parameter for the respondents in each group or a vector
+of length \code{nrow(data)} giving the prior mean for each respondent's
+ideology parameter}
 
 \item{x}{An R object}
 }
@@ -39,21 +45,24 @@ its argument into a \code{response_matrix}.
 x   <- c(1, 0, 1, 1, 0, NA)
 ex1 <- matrix(x, nrow = 3)
 ex2 <- data.frame(x1 = x[1:3], x2 = x[4:6])
-response_matrix(ex1)
-response_matrix(ex2)
+response_matrix(ex1, response_codes = list(yea = 1, nay = 0, missing = NA))
+response_matrix(ex2, response_codes = list(yea = 1, nay = 0, missing = NA))
 ## Multiple "yea" codes
 x   <- c(1, -1, 2, 3, -1, NA)
 ex3 <- matrix(x, nrow = 3)
 ex4 <- data.frame(x1 = x[1:3], x2 = x[4:6])
-response_matrix(ex3, yea_codes = 1:3)
-response_matrix(ex4, yea_codes = 1:3)
+response_matrix(ex3, response_codes = list(yea = 1:3, nay = -1, missing = NA))
+response_matrix(ex4, response_codes = list(yea = 1:3, nay = -1, missing = NA))
 ## Dataframe with factors
 ex5 <- data.frame(x = factor(c("Yea", "Nay", "Yea")),
                   y = factor(c("Yea", "Nay", NA)))
-y <- response_matrix(ex5, yea_codes = "Yea", nay_codes = "Nay")
+y <- response_matrix(ex5, response_codes = list(yea = "Yea", nay = "Nay",
+                                            missing = NA))
 is.response_matrix(ex5)
 is.response_matrix(y)
-as.response_matrix(ex5, yea_codes = "Yea", nay_codes = "Nay")
-as.response_matrix(y,   yea_codes = "Yea", nay_codes = "Nay")
+as.response_matrix(ex5, response_codes = list(yea = "Yea", nay = "Nay",
+                                          missing = NA))
+as.response_matrix(y,   response_codes = list(yea = "Yea", nay = "Nay",
+                                          missing = NA))
 
 }

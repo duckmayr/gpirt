@@ -38,9 +38,9 @@ arma::vec ess(const arma::vec& f, const arma::vec& y, const arma::mat& S) {
     arma::vec f_prime(n);
     int iter = 0;
     while ( reject ) {
+        iter += 1;
         // Get f_prime given current epsilon
         f_prime = f * std::cos(epsilon) + nu * std::sin(epsilon);
-        iter += 1;
         // If the log likelihood is over our threshold, accept
         if ( ll(f_prime, y) > log_y ) {
             reject = false;
@@ -54,6 +54,10 @@ arma::vec ess(const arma::vec& f, const arma::vec& y, const arma::mat& S) {
                 epsilon_max = epsilon;
             }
             epsilon = R::runif(epsilon_min, epsilon_max);
+        }
+        if ( iter > 1000000 ) {
+            Rcpp::warning("\nESS sampler for f failed, continuing with last draw.\n");
+            reject = false;
         }
     }
     return f_prime;
