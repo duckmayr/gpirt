@@ -22,4 +22,7 @@ LinkingTo:
 Imports: 
     Rcpp
 Suggests: 
-    testthat
+    testthat,
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
