@@ -7,7 +7,7 @@
 gpirtMCMC(data, sample_iterations, burn_iterations, vote_codes = list(yea
   = 1:3, nay = 4:6, missing = c(0, 7:9, NA)), group = rep(0, nrow(data)),
   prior_means = list(`0` = 0, `100` = -1, `200` = 1), sf = 1,
-  ell = 1, theta_init = NULL)
+  ell = 1, theta_init = NULL, store_fstar = FALSE)
 }
 \arguments{
 \item{data}{An object of class \code{\link{response_matrix}},
@@ -44,12 +44,25 @@ covariance function for the Gaussian process prior; default is 1}
 \item{theta_init}{A vector of length \code{nrow(data)} giving initial values
 for the respondent ideology parameters; if NULL (the default), the initial
 values are drawn from the parameters' prior distributions.}
+
+\item{store_fstar}{A logical vector of length one determining whether the
+f* draws are stored; the default is \code{FALSE}}
 }
 \value{
-A list of length two; the first element, "theta", is a matrix of
-  theta parameter draws (with dimensions (sample_iterations + 1) x n; the
-  initial values are included), and the second element, "f", is an array of
-  the f parameter draws (with dimensions n x m x (sample_iterations + 1)).
+A list with elements
+  \describe{
+      \item{theta}{The theta parameter draws, stored in a matrix with
+                   \code{sample_iterations} + 1 rows (initial values are
+                   included) and n columns.}
+      \item{f}{The f parameter draws, stored in an array with \code{n} rows,
+               \code{m} columns, and \code{sample_iterations} + 1 slices.}
+      \item{fstar}{The f* parameter draws, stored in an array with 1001 rows,
+                   \code{m} columns, and \code{sample_iterations} + 1 slices.
+                   The first row corresponds to f* draws for a theta value
+                   of -5.0, the second to f* draws for a theta value of
+                   -4.99, ..., and the last to f* draws for a theta value
+                   of 5.0.}
+  }
 }
 \description{
 Provides posterior samples for the GP-IRT.
