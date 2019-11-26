@@ -1,23 +1,32 @@
 #include <RcppArmadillo.h>
-#include <truncnorm.h>
 #include <mvnorm.h>
 
 // Function to draw f
-arma::mat draw_f(const arma::mat& f, const arma::mat& y, const arma::mat& S);
+arma::mat draw_f(const arma::mat& f, const arma::mat& y, const arma::mat& S,
+                 const arma::mat& mu);
 
 // Function to draw fstar
 arma::mat draw_fstar(const arma::mat& f, const arma::vec& theta,
                      const arma::vec& theta_star, const arma::mat& S00,
-                     const double sf, const double ell);
+                     const double sf, const double ell,
+                     const arma::mat& mu, const arma::mat& mu_star);
 
 // Function to draw theta
 arma::vec draw_theta(const int n, const arma::vec& theta_star,
                      const arma::mat& y, const arma::mat& theta_prior,
-                     const arma::uvec& groups, const arma::mat& fstar);
+                     const arma::uvec& groups, const arma::mat& fstar,
+                     const arma::mat& mu_star);
+
+// Function to draw beta
+arma::mat draw_beta(const arma::mat& beta, const arma::mat& X,
+                    const arma::mat& y, const arma::mat& f,
+                    const arma::mat& prior_means, const arma::mat& prior_sds,
+                    const arma::mat& proposal_sds);
 
 // Covariance function
 arma::mat K(const arma::vec& x1, const arma::vec& x2, double sf, double ell);
 
 // Likelihood function
 double ll(const arma::vec& f, const arma::vec& y);
+double ll_bar(const arma::vec& f, const arma::vec& y, const arma::vec& mu);
 

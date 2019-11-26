@@ -7,7 +7,10 @@
 gpirtMCMC(data, sample_iterations, burn_iterations, vote_codes = list(yea
   = 1:3, nay = 4:6, missing = c(0, 7:9, NA)), group = rep(0, nrow(data)),
   prior_means = list(`0` = 0, `100` = -1, `200` = 1), sf = 1,
-  ell = 1, theta_init = NULL, store_fstar = FALSE)
+  ell = 1, beta_prior_means = matrix(0, nrow = 2, ncol = ncol(data)),
+  beta_prior_sds = matrix(3, nrow = 2, ncol = ncol(data)),
+  beta_proposal_sds = matrix(0.1, nrow = 2, ncol = ncol(data)),
+  theta_init = NULL, store_fstar = FALSE)
 }
 \arguments{
 \item{data}{An object of class \code{\link{response_matrix}},
@@ -29,10 +32,10 @@ only used if \code{data} must be coerced to a \code{response_matrix} object}
 \code{nrow(data)} identifying the group each respondent;
 only used if \code{data} must be coerced to a \code{response_matrix} object}
 
-\item{prior_means}{A list of \code{length(group)} giving the prior mean
-for the ideology parameter for the respondents in each group or a vector
-of length \code{nrow(data)} giving the prior mean for each respondent's
-ideology parameter;
+\item{prior_means}{A list of length \code{length(group)} giving the prior
+mean for the ideology parameter for the respondents in each group or a
+vector of length \code{nrow(data)} giving the prior mean for each
+respondent's ideology parameter;
 only used if \code{data} must be coerced to a \code{response_matrix} object}
 
 \item{sf}{A numeric vector of length one giving the scale factor for the
@@ -40,6 +43,18 @@ covariance function for the Gaussian process prior; default is 1}
 
 \item{ell}{A numeric vector of length one giving the length scale for the
 covariance function for the Gaussian process prior; default is 1}
+
+\item{beta_prior_means}{A numeric matrix of with \code{ncol(data)} columns
+and two rows giving the prior means for the items' linear means' intercept
+and slope; by default, a matrix of zeros}
+
+\item{beta_prior_sds}{A numeric matrix of with \code{ncol(data)} columns
+and two rows giving the prior standard deviations for the items' linear
+means' intercept and slope; by default, a matrix of threes}
+
+\item{beta_proposal_sds}{A numeric matrix of with \code{ncol(data)} columns
+and two rows giving the standard deviations for proposals for the items'
+linear means' intercept and slope; by default a matrix filled with 0.1}
 
 \item{theta_init}{A vector of length \code{nrow(data)} giving initial values
 for the respondent ideology parameters; if NULL (the default), the initial
@@ -54,6 +69,8 @@ A list with elements
       \item{theta}{The theta parameter draws, stored in a matrix with
                    \code{sample_iterations} + 1 rows (initial values are
                    included) and n columns.}
+      \item{beta}{The beta parameter draws, stored in an array with 2 rows,
+                  \code{m} columns, and \code{sample_iterations} + 1 slices.}
       \item{f}{The f parameter draws, stored in an array with \code{n} rows,
                \code{m} columns, and \code{sample_iterations} + 1 slices.}
       \item{fstar}{The f* parameter draws, stored in an array with 1001 rows,

@@ -16,15 +16,24 @@
 #' @param group An integer or character vector, or factor, of length
 #'   \code{nrow(data)} identifying the group each respondent;
 #'   only used if \code{data} must be coerced to a \code{response_matrix} object
-#' @param prior_means A list of \code{length(group)} giving the prior mean
-#'   for the ideology parameter for the respondents in each group or a vector
-#'   of length \code{nrow(data)} giving the prior mean for each respondent's
-#'   ideology parameter;
+#' @param prior_means A list of length \code{length(group)} giving the prior
+#'   mean for the ideology parameter for the respondents in each group or a
+#'   vector of length \code{nrow(data)} giving the prior mean for each
+#'   respondent's ideology parameter;
 #'   only used if \code{data} must be coerced to a \code{response_matrix} object
 #' @param sf A numeric vector of length one giving the scale factor for the
 #'   covariance function for the Gaussian process prior; default is 1
 #' @param ell A numeric vector of length one giving the length scale for the
 #'   covariance function for the Gaussian process prior; default is 1
+#' @param beta_prior_means A numeric matrix of with \code{ncol(data)} columns
+#'   and two rows giving the prior means for the items' linear means' intercept
+#'   and slope; by default, a matrix of zeros
+#' @param beta_prior_sds A numeric matrix of with \code{ncol(data)} columns
+#'   and two rows giving the prior standard deviations for the items' linear
+#'   means' intercept and slope; by default, a matrix of threes
+#' @param beta_proposal_sds A numeric matrix of with \code{ncol(data)} columns
+#'   and two rows giving the standard deviations for proposals for the items'
+#'   linear means' intercept and slope; by default a matrix filled with 0.1
 #' @param theta_init A vector of length \code{nrow(data)} giving initial values
 #'   for the respondent ideology parameters; if NULL (the default), the initial
 #'   values are drawn from the parameters' prior distributions.
@@ -36,6 +45,8 @@
 #'       \item{theta}{The theta parameter draws, stored in a matrix with
 #'                    \code{sample_iterations} + 1 rows (initial values are
 #'                    included) and n columns.}
+#'       \item{beta}{The beta parameter draws, stored in an array with 2 rows,
+#'                   \code{m} columns, and \code{sample_iterations} + 1 slices.}
 #'       \item{f}{The f parameter draws, stored in an array with \code{n} rows,
 #'                \code{m} columns, and \code{sample_iterations} + 1 slices.}
 #'       \item{fstar}{The f* parameter draws, stored in an array with 1001 rows,
@@ -91,8 +102,11 @@ gpirtMCMC <- function(data, sample_iterations, burn_iterations,
                                         missing = c(0, 7:9, NA)),
                       group = rep(0, nrow(data)),
                       prior_means = list(`0` = 0, `100` = -1, `200` = 1),
-                      sf = 1, ell = 1, theta_init = NULL,
-                      store_fstar = FALSE) {
+                      sf = 1, ell = 1,
+                      beta_prior_means = matrix(0, nrow = 2, ncol = ncol(data)),
+                      beta_prior_sds = matrix(3, nrow = 2, ncol = ncol(data)),
+                      beta_proposal_sds = matrix(0.1, nrow = 2, ncol = ncol(data)),
+                      theta_init = NULL, store_fstar = FALSE) {
     # First we make sure our data are in the proper format:
     data <- as.response_matrix(data, vote_codes, group, prior_means)
     # We'll convert prior_means and group to something more useful for things
@@ -113,10 +127,14 @@ gpirtMCMC <- function(data, sample_iterations, burn_iterations,
     # Now we can call the C++ sampler function
     if ( store_fstar ) {
         result <- .gpirtMCMC0(data, theta_init, sample_iterations,
-                              burn_iterations, means, groups, sf^2, 1 / (ell^2))
+                              burn_iterations, means, groups, sf^2, 1 / (ell^2),
+                              beta_prior_means, beta_prior_sds,
+                              beta_proposal_sds)
     } else {
         result <- .gpirtMCMC1(data, theta_init, sample_iterations,
-                              burn_iterations, means, groups, sf^2, 1 / (ell^2))
+                              burn_iterations, means, groups, sf^2, 1 / (ell^2),
+                              beta_prior_means, beta_prior_sds,
+                              beta_proposal_sds)
     }
     # And return the result
     return(result)

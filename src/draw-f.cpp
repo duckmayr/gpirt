@@ -17,7 +17,8 @@
  * y is the response, and
  * S is the covariance matrix,
  */
-arma::vec ess(const arma::vec& f, const arma::vec& y, const arma::mat& S) {
+arma::vec ess(const arma::vec& f, const arma::vec& y, const arma::mat& S,
+              const arma::mat& mu) {
     arma::uword n = f.n_elem;
     // First we draw "an ellipse" -- a vector drawn from a multivariate
     // normal with mean zero and covariance Sigma. rmvnorm() will return
@@ -26,7 +27,7 @@ arma::vec ess(const arma::vec& f, const arma::vec& y, const arma::mat& S) {
     arma::vec nu = tmp.t();
     // Then we calculate the log likelihood threshold for acceptance, "log_y"
     double u = R::runif(0.0, 1.0);
-    double log_y = ll(f, y) + std::log(u);
+    double log_y = ll_bar(f, y, mu) + std::log(u);
     // For our while loop condition:
     bool reject = true;
     // Set up the proposal band and draw initial proposal epsilon:
@@ -42,7 +43,7 @@ arma::vec ess(const arma::vec& f, const arma::vec& y, const arma::mat& S) {
         // Get f_prime given current epsilon
         f_prime = f * std::cos(epsilon) + nu * std::sin(epsilon);
         // If the log likelihood is over our threshold, accept
-        if ( ll(f_prime, y) > log_y ) {
+        if ( ll_bar(f_prime, y, mu) > log_y ) {
             reject = false;
         }
         // otw, adjust our proposal band & draw a new epsilon, then repeat
@@ -55,22 +56,19 @@ arma::vec ess(const arma::vec& f, const arma::vec& y, const arma::mat& S) {
             }
             epsilon = R::runif(epsilon_min, epsilon_max);
         }
-        if ( iter > 1000000 ) {
-            Rcpp::warning("\nESS sampler for f failed, continuing with last draw.\n");
-            reject = false;
-        }
     }
     return f_prime;
 }
 
 // Function to draw f
 
-arma::mat draw_f(const arma::mat& f, const arma::mat& y, const arma::mat& S) {
+arma::mat draw_f(const arma::mat& f, const arma::mat& y, const arma::mat& S,
+                 const arma::mat& mu) {
     arma::uword n = f.n_rows;
     arma::uword m = f.n_cols;
     arma::mat result(n, m);
     for ( arma::uword j = 0; j < m; ++j) {
-        result.col(j) = ess(f.col(j), y.col(j), S);
+        result.col(j) = ess(f.col(j), y.col(j), S, mu.col(j));
     }
     return result;
 }

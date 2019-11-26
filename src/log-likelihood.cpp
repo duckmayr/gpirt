@@ -22,3 +22,16 @@ double ll(const arma::vec& f, const arma::vec& y) {
     return result;
 }
 
+double ll_bar(const arma::vec& f, const arma::vec& y, const arma::vec& mu) {
+    int n = f.n_elem;
+    double result = 0.0;
+    arma::vec g = f + mu;
+    for ( arma::uword i = 0; i < n; ++i ) {
+        if ( std::isnan(y[i]) ) {
+            continue;
+        }
+        double a = y[i] * g[i];
+        result -= std::log(1 + std::exp(-a));
+    }
+    return result;
+}
