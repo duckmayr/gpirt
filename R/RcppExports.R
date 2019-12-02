@@ -9,3 +9,19 @@
     .Call(`_gpirt_gpirtMCMC1`, y, theta, sample_iterations, burn_iterations, means, groups, sf, ell, beta_prior_means, beta_prior_sds, beta_step_sizes)
 }
 
+.gpirtMCMC2 <- function(y, theta, sample_iterations, burn_iterations, means, groups, sf, ell, beta_prior_means, beta_prior_sds, beta_step_sizes) {
+    .Call(`_gpirt_gpirtMCMC2`, y, theta, sample_iterations, burn_iterations, means, groups, sf, ell, beta_prior_means, beta_prior_sds, beta_step_sizes)
+}
+
+.gpirtMCMC3 <- function(y, theta, sample_iterations, burn_iterations, means, groups, sf, ell, beta_prior_means, beta_prior_sds, beta_step_sizes) {
+    .Call(`_gpirt_gpirtMCMC3`, y, theta, sample_iterations, burn_iterations, means, groups, sf, ell, beta_prior_means, beta_prior_sds, beta_step_sizes)
+}
+
+.gpirtMCMC4 <- function(y, theta, sample_iterations, burn_iterations, means, groups, sf, ell, beta_prior_means, beta_prior_sds, beta_step_sizes) {
+    .Call(`_gpirt_gpirtMCMC4`, y, theta, sample_iterations, burn_iterations, means, groups, sf, ell, beta_prior_means, beta_prior_sds, beta_step_sizes)
+}
+
+.gpirtMCMC5 <- function(y, theta, sample_iterations, burn_iterations, means, groups, sf, ell, beta_prior_means, beta_prior_sds, beta_step_sizes) {
+    .Call(`_gpirt_gpirtMCMC5`, y, theta, sample_iterations, burn_iterations, means, groups, sf, ell, beta_prior_means, beta_prior_sds, beta_step_sizes)
+}
+

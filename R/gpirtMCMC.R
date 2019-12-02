@@ -25,15 +25,16 @@
 #'   covariance function for the Gaussian process prior; default is 1
 #' @param ell A numeric vector of length one giving the length scale for the
 #'   covariance function for the Gaussian process prior; default is 1
-#' @param beta_prior_means A numeric matrix of with \code{ncol(data)} columns
-#'   and two rows giving the prior means for the items' linear means' intercept
-#'   and slope; by default, a matrix of zeros
-#' @param beta_prior_sds A numeric matrix of with \code{ncol(data)} columns
-#'   and two rows giving the prior standard deviations for the items' linear
-#'   means' intercept and slope; by default, a matrix of threes
-#' @param beta_proposal_sds A numeric matrix of with \code{ncol(data)} columns
-#'   and two rows giving the standard deviations for proposals for the items'
-#'   linear means' intercept and slope; by default a matrix filled with 0.1
+#' @param mean_function A character vector of length one specifying the mean
+#'   function for the Gaussian process prior; possible values are "zero",
+#'   "linear", and "quadratic" (the default is "zero")
+#' @param beta_prior_mean A numeric vector of length one giving the prior mean
+#'   for coefficients in the mean function; the default is 0.
+#' @param beta_prior_sd A numeric vector of length one giving the prior standard
+#'   deviation for coefficients in the mean function; the default is 3.
+#' @param beta_proposal_sd A numeric vector of length one giving the standard
+#'   deviation for proposals for the mean function's coefficients; the default
+#'   is 0.1.
 #' @param theta_init A vector of length \code{nrow(data)} giving initial values
 #'   for the respondent ideology parameters; if NULL (the default), the initial
 #'   values are drawn from the parameters' prior distributions.
@@ -45,8 +46,11 @@
 #'       \item{theta}{The theta parameter draws, stored in a matrix with
 #'                    \code{sample_iterations} + 1 rows (initial values are
 #'                    included) and n columns.}
-#'       \item{beta}{The beta parameter draws, stored in an array with 2 rows,
-#'                   \code{m} columns, and \code{sample_iterations} + 1 slices.}
+#'       \item{beta}{The beta parameter draws, stored in an array with 2 rows
+#'                   for a linear mean function and 3 for a quadratic mean
+#'                   function, \code{m} columns, and \code{sample_iterations}
+#'                   + 1 slices; this element is not present if
+#'                   \code{mean_function} is "zero".}
 #'       \item{f}{The f parameter draws, stored in an array with \code{n} rows,
 #'                \code{m} columns, and \code{sample_iterations} + 1 slices.}
 #'       \item{fstar}{The f* parameter draws, stored in an array with 1001 rows,
@@ -103,12 +107,22 @@ gpirtMCMC <- function(data, sample_iterations, burn_iterations,
                       group = rep(0, nrow(data)),
                       prior_means = list(`0` = 0, `100` = -1, `200` = 1),
                       sf = 1, ell = 1,
-                      beta_prior_means = matrix(0, nrow = 2, ncol = ncol(data)),
-                      beta_prior_sds = matrix(3, nrow = 2, ncol = ncol(data)),
-                      beta_proposal_sds = matrix(0.1, nrow = 2, ncol = ncol(data)),
+                      mean_function = "zero",
+                      beta_prior_mean = 0.0,
+                      beta_prior_sd = 3.0,
+                      beta_proposal_sd = 0.1,
                       theta_init = NULL, store_fstar = FALSE) {
     # First we make sure our data are in the proper format:
     data <- as.response_matrix(data, vote_codes, group, prior_means)
+    # Then make sure the mean function is properly specified:
+    if ( !(mean_function %in% c("zero", "linear", "quadratic")) ) {
+        stop("Mean function should be one of zero, linear, or quadratic.")
+    }
+    # Fill out beta_* variables
+    p <- match(mean_function, c("zero", "linear", "quadratic"))
+    beta_prior_means <- matrix(beta_prior_mean, nrow = p, ncol = ncol(data))
+    beta_prior_sds <- matrix(beta_prior_sd, nrow = p, ncol = ncol(data))
+    beta_proposal_sds <- matrix(beta_proposal_sd, nrow = p, ncol = ncol(data))
     # We'll convert prior_means and group to something more useful for things
     # on the C++ side
     if ( is.list(attr(data, "prior_means")) ) {
@@ -125,17 +139,10 @@ gpirtMCMC <- function(data, sample_iterations, burn_iterations,
         theta_init  <- rnorm(nrow(data), mean = prior_means)
     }
     # Now we can call the C++ sampler function
-    if ( store_fstar ) {
-        result <- .gpirtMCMC0(data, theta_init, sample_iterations,
-                              burn_iterations, means, groups, sf^2, 1 / (ell^2),
-                              beta_prior_means, beta_prior_sds,
-                              beta_proposal_sds)
-    } else {
-        result <- .gpirtMCMC1(data, theta_init, sample_iterations,
-                              burn_iterations, means, groups, sf^2, 1 / (ell^2),
-                              beta_prior_means, beta_prior_sds,
-                              beta_proposal_sds)
-    }
+    cpp_function <- get(paste0(".gpirtMCMC", 2 * (p-1) + !store_fstar))
+    result <- cpp_function(data, theta_init, sample_iterations, burn_iterations,
+                           means, groups, sf^2, 1 / (ell^2),
+                           beta_prior_means, beta_prior_sds, beta_proposal_sds)
     # And return the result
     return(result)
 }

@@ -7,10 +7,9 @@
 gpirtMCMC(data, sample_iterations, burn_iterations, vote_codes = list(yea
   = 1:3, nay = 4:6, missing = c(0, 7:9, NA)), group = rep(0, nrow(data)),
   prior_means = list(`0` = 0, `100` = -1, `200` = 1), sf = 1,
-  ell = 1, beta_prior_means = matrix(0, nrow = 2, ncol = ncol(data)),
-  beta_prior_sds = matrix(3, nrow = 2, ncol = ncol(data)),
-  beta_proposal_sds = matrix(0.1, nrow = 2, ncol = ncol(data)),
-  theta_init = NULL, store_fstar = FALSE)
+  ell = 1, mean_function = "zero", beta_prior_mean = 0,
+  beta_prior_sd = 3, beta_proposal_sd = 0.1, theta_init = NULL,
+  store_fstar = FALSE)
 }
 \arguments{
 \item{data}{An object of class \code{\link{response_matrix}},
@@ -44,17 +43,19 @@ covariance function for the Gaussian process prior; default is 1}
 \item{ell}{A numeric vector of length one giving the length scale for the
 covariance function for the Gaussian process prior; default is 1}
 
-\item{beta_prior_means}{A numeric matrix of with \code{ncol(data)} columns
-and two rows giving the prior means for the items' linear means' intercept
-and slope; by default, a matrix of zeros}
+\item{mean_function}{A character vector of length one specifying the mean
+function for the Gaussian process prior; possible values are "zero",
+"linear", and "quadratic" (the default is "zero")}
 
-\item{beta_prior_sds}{A numeric matrix of with \code{ncol(data)} columns
-and two rows giving the prior standard deviations for the items' linear
-means' intercept and slope; by default, a matrix of threes}
+\item{beta_prior_mean}{A numeric vector of length one giving the prior mean
+for coefficients in the mean function; the default is 0.}
 
-\item{beta_proposal_sds}{A numeric matrix of with \code{ncol(data)} columns
-and two rows giving the standard deviations for proposals for the items'
-linear means' intercept and slope; by default a matrix filled with 0.1}
+\item{beta_prior_sd}{A numeric vector of length one giving the prior standard
+deviation for coefficients in the mean function; the default is 3.}
+
+\item{beta_proposal_sd}{A numeric vector of length one giving the standard
+deviation for proposals for the mean function's coefficients; the default
+is 0.1.}
 
 \item{theta_init}{A vector of length \code{nrow(data)} giving initial values
 for the respondent ideology parameters; if NULL (the default), the initial
@@ -69,8 +70,11 @@ A list with elements
       \item{theta}{The theta parameter draws, stored in a matrix with
                    \code{sample_iterations} + 1 rows (initial values are
                    included) and n columns.}
-      \item{beta}{The beta parameter draws, stored in an array with 2 rows,
-                  \code{m} columns, and \code{sample_iterations} + 1 slices.}
+      \item{beta}{The beta parameter draws, stored in an array with 2 rows
+                  for a linear mean function and 3 for a quadratic mean
+                  function, \code{m} columns, and \code{sample_iterations}
+                  + 1 slices; this element is not present if
+                  \code{mean_function} is "zero".}
       \item{f}{The f parameter draws, stored in an array with \code{n} rows,
                \code{m} columns, and \code{sample_iterations} + 1 slices.}
       \item{fstar}{The f* parameter draws, stored in an array with 1001 rows,
