@@ -3,7 +3,6 @@
 export(as.response_matrix)
 export(gpirtMCMC)
 export(is.response_matrix)
-export(plot_irf)
 export(response_matrix)
 importFrom(Rcpp,sourceCpp)
 importFrom(stats,na.omit)

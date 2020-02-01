@@ -1,3 +1,6 @@
 ^\.travis\.yml$
 ^CONTRIBUTING\.md$
 ^appveyor\.yml$
+^.*\.Rproj$
+^\.Rproj\.user$
+^data-raw$
