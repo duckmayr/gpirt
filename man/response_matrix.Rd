@@ -6,15 +6,21 @@
 \alias{as.response_matrix}
 \title{Create an object of class response_matrix}
 \usage{
-response_matrix(data, response_codes = list(yea = 1:3, nay = 4:6, missing
-  = c(0, 7:9, NA)), group = rep(0, nrow(data)), prior_means = list(`0`
-  = 0, `100` = -1, `200` = 1))
+response_matrix(
+  data,
+  response_codes = list(yea = 1:3, nay = 4:6, missing = c(0, 7:9, NA)),
+  group = rep(0, nrow(data)),
+  prior_means = list(`0` = 0, `100` = -1, `200` = 1)
+)
 
 is.response_matrix(x)
 
-as.response_matrix(x, response_codes = list(yea = 1:3, nay = 4:6, missing
-  = c(0, 7:9, NA)), group = rep(0, nrow(x)), prior_means = list(`0` =
-  0, `100` = -1, `200` = 1))
+as.response_matrix(
+  x,
+  response_codes = list(yea = 1:3, nay = 4:6, missing = c(0, 7:9, NA)),
+  group = rep(0, nrow(x)),
+  prior_means = list(`0` = 0, `100` = -1, `200` = 1)
+)
 }
 \arguments{
 \item{data}{A matrix or dataframe of responses}

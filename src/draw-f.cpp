@@ -1,4 +1,5 @@
 #include "gpirt.h"
+#include "mvnormal.h"
 
 // ELLIPTICAL SLICE SAMPLER
 /*
@@ -17,14 +18,12 @@
  * y is the response, and
  * S is the covariance matrix,
  */
-arma::vec ess(const arma::vec& f, const arma::vec& y, const arma::mat& S,
+arma::vec ess(const arma::vec& f, const arma::vec& y, const arma::mat& cholS,
               const arma::mat& mu) {
     arma::uword n = f.n_elem;
     // First we draw "an ellipse" -- a vector drawn from a multivariate
-    // normal with mean zero and covariance Sigma. rmvnorm() will return
-    // a 1 x n matrix that we transpose to an n x 1 vector
-    arma::mat tmp = rmvnorm(1, arma::zeros<arma::colvec>(n), S);
-    arma::vec nu = tmp.t();
+    // normal with mean zero and covariance Sigma.
+    arma::vec nu = rmvnorm(cholS);
     // Then we calculate the log likelihood threshold for acceptance, "log_y"
     double u = R::runif(0.0, 1.0);
     double log_y = ll_bar(f, y, mu) + std::log(u);
@@ -62,13 +61,13 @@ arma::vec ess(const arma::vec& f, const arma::vec& y, const arma::mat& S,
 
 // Function to draw f
 
-arma::mat draw_f(const arma::mat& f, const arma::mat& y, const arma::mat& S,
+arma::mat draw_f(const arma::mat& f, const arma::mat& y, const arma::mat& cholS,
                  const arma::mat& mu) {
     arma::uword n = f.n_rows;
     arma::uword m = f.n_cols;
     arma::mat result(n, m);
     for ( arma::uword j = 0; j < m; ++j) {
-        result.col(j) = ess(f.col(j), y.col(j), S, mu.col(j));
+        result.col(j) = ess(f.col(j), y.col(j), cholS, mu.col(j));
     }
     return result;
 }

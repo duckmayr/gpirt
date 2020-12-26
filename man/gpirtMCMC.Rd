@@ -4,13 +4,19 @@
 \alias{gpirtMCMC}
 \title{Gaussian Process IRT MCMC}
 \usage{
-gpirtMCMC(data, sample_iterations, burn_iterations, vote_codes = list(yea
-  = 1:3, nay = 4:6, missing = c(0, 7:9, NA)), group = rep(0, nrow(data)),
-  prior_means = list(`0` = 0, `100` = -1, `200` = 1), sf = 1,
-  ell = 1, beta_prior_means = matrix(0, nrow = 2, ncol = ncol(data)),
+gpirtMCMC(
+  data,
+  sample_iterations,
+  burn_iterations,
+  vote_codes = list(yea = 1:3, nay = 4:6, missing = c(0, 7:9, NA)),
+  group = rep(0, nrow(data)),
+  prior_means = list(`0` = 0, `100` = -1, `200` = 1),
+  beta_prior_means = matrix(0, nrow = 2, ncol = ncol(data)),
   beta_prior_sds = matrix(3, nrow = 2, ncol = ncol(data)),
   beta_proposal_sds = matrix(0.1, nrow = 2, ncol = ncol(data)),
-  theta_init = NULL, store_fstar = FALSE)
+  theta_init = NULL,
+  store_fstar = FALSE
+)
 }
 \arguments{
 \item{data}{An object of class \code{\link{response_matrix}},
@@ -37,12 +43,6 @@ mean for the ideology parameter for the respondents in each group or a
 vector of length \code{nrow(data)} giving the prior mean for each
 respondent's ideology parameter;
 only used if \code{data} must be coerced to a \code{response_matrix} object}
-
-\item{sf}{A numeric vector of length one giving the scale factor for the
-covariance function for the Gaussian process prior; default is 1}
-
-\item{ell}{A numeric vector of length one giving the length scale for the
-covariance function for the Gaussian process prior; default is 1}
 
 \item{beta_prior_means}{A numeric matrix of with \code{ncol(data)} columns
 and two rows giving the prior means for the items' linear means' intercept
