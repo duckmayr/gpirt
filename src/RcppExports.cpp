@@ -11,9 +11,9 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
-// gpirtMCMC0
-Rcpp::List gpirtMCMC0(const arma::mat& y, arma::vec theta, const int sample_iterations, const int burn_iterations, const arma::vec& means, const arma::uvec& groups, const arma::mat& beta_prior_means, const arma::mat& beta_prior_sds, const arma::mat& beta_step_sizes);
-RcppExport SEXP _gpirt_gpirtMCMC0(SEXP ySEXP, SEXP thetaSEXP, SEXP sample_iterationsSEXP, SEXP burn_iterationsSEXP, SEXP meansSEXP, SEXP groupsSEXP, SEXP beta_prior_meansSEXP, SEXP beta_prior_sdsSEXP, SEXP beta_step_sizesSEXP) {
+// gpirtMCMC
+Rcpp::List gpirtMCMC(const arma::mat& y, arma::vec theta, const int sample_iterations, const int burn_iterations, const arma::mat& beta_prior_means, const arma::mat& beta_prior_sds, const arma::mat& beta_step_sizes);
+RcppExport SEXP _gpirt_gpirtMCMC(SEXP ySEXP, SEXP thetaSEXP, SEXP sample_iterationsSEXP, SEXP burn_iterationsSEXP, SEXP beta_prior_meansSEXP, SEXP beta_prior_sdsSEXP, SEXP beta_step_sizesSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -21,38 +21,16 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< arma::vec >::type theta(thetaSEXP);
     Rcpp::traits::input_parameter< const int >::type sample_iterations(sample_iterationsSEXP);
     Rcpp::traits::input_parameter< const int >::type burn_iterations(burn_iterationsSEXP);
-    Rcpp::traits::input_parameter< const arma::vec& >::type means(meansSEXP);
-    Rcpp::traits::input_parameter< const arma::uvec& >::type groups(groupsSEXP);
     Rcpp::traits::input_parameter< const arma::mat& >::type beta_prior_means(beta_prior_meansSEXP);
     Rcpp::traits::input_parameter< const arma::mat& >::type beta_prior_sds(beta_prior_sdsSEXP);
     Rcpp::traits::input_parameter< const arma::mat& >::type beta_step_sizes(beta_step_sizesSEXP);
-    rcpp_result_gen = Rcpp::wrap(gpirtMCMC0(y, theta, sample_iterations, burn_iterations, means, groups, beta_prior_means, beta_prior_sds, beta_step_sizes));
-    return rcpp_result_gen;
-END_RCPP
-}
-// gpirtMCMC1
-Rcpp::List gpirtMCMC1(const arma::mat& y, arma::vec theta, const int sample_iterations, const int burn_iterations, const arma::vec& means, const arma::uvec& groups, const arma::mat& beta_prior_means, const arma::mat& beta_prior_sds, const arma::mat& beta_step_sizes);
-RcppExport SEXP _gpirt_gpirtMCMC1(SEXP ySEXP, SEXP thetaSEXP, SEXP sample_iterationsSEXP, SEXP burn_iterationsSEXP, SEXP meansSEXP, SEXP groupsSEXP, SEXP beta_prior_meansSEXP, SEXP beta_prior_sdsSEXP, SEXP beta_step_sizesSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::mat& >::type y(ySEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type theta(thetaSEXP);
-    Rcpp::traits::input_parameter< const int >::type sample_iterations(sample_iterationsSEXP);
-    Rcpp::traits::input_parameter< const int >::type burn_iterations(burn_iterationsSEXP);
-    Rcpp::traits::input_parameter< const arma::vec& >::type means(meansSEXP);
-    Rcpp::traits::input_parameter< const arma::uvec& >::type groups(groupsSEXP);
-    Rcpp::traits::input_parameter< const arma::mat& >::type beta_prior_means(beta_prior_meansSEXP);
-    Rcpp::traits::input_parameter< const arma::mat& >::type beta_prior_sds(beta_prior_sdsSEXP);
-    Rcpp::traits::input_parameter< const arma::mat& >::type beta_step_sizes(beta_step_sizesSEXP);
-    rcpp_result_gen = Rcpp::wrap(gpirtMCMC1(y, theta, sample_iterations, burn_iterations, means, groups, beta_prior_means, beta_prior_sds, beta_step_sizes));
+    rcpp_result_gen = Rcpp::wrap(gpirtMCMC(y, theta, sample_iterations, burn_iterations, beta_prior_means, beta_prior_sds, beta_step_sizes));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_gpirt_gpirtMCMC0", (DL_FUNC) &_gpirt_gpirtMCMC0, 9},
-    {"_gpirt_gpirtMCMC1", (DL_FUNC) &_gpirt_gpirtMCMC1, 9},
+    {"_gpirt_gpirtMCMC", (DL_FUNC) &_gpirt_gpirtMCMC, 7},
     {NULL, NULL, 0}
 };
 

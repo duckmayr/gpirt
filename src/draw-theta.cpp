@@ -1,28 +1,21 @@
 #include "gpirt.h"
 
-arma::vec draw_theta(const int n, const arma::vec& theta_star,
-                     const arma::mat& y, const arma::mat& theta_prior,
-                     const arma::uvec& groups, const arma::mat& fstar,
-                     const arma::mat& mu_star) {
-    int N = theta_star.n_elem;
-    int m = fstar.n_cols;
+arma::vec draw_theta(const arma::vec& theta_star,
+                     const arma::mat& y, const arma::vec& theta_prior,
+                     const arma::mat& fstar, const arma::mat& mu_star) {
+    arma::uword n = y.n_rows;
+    arma::uword m = y.n_cols;
+    arma::uword N = theta_star.n_elem;
     arma::vec result(n);
     arma::vec responses(m);
-    arma::vec theta_i_prior(N);
-    arma::vec fk(m);
-    arma::vec muk(m);
     arma::vec P(N);
     for ( arma::uword i = 0; i < n; ++i ) {
-        // For each respondent,
-        responses     = y.row(i).t();
-        theta_i_prior = theta_prior.col(groups[i]);
+        // For each respondent, extract their responses
+        responses = y.row(i).t();
         for ( arma::uword k = 0; k < N; ++k ) {
-            // For each value in theta_star,
+            // Then for each value in theta_star,
             // get the log prior + the log likelihood
-            P[k] = theta_i_prior[k];
-            fk = fstar.row(k).t();
-            muk = mu_star.row(k).t();
-            P[k] += ll_bar(fk, responses, muk);
+            P[k] = theta_prior[k] + ll(fstar.row(k).t(), responses);
         }
         // Exponeniate, cumsum, then scale to [0, 1] for the "CDF"
         P = arma::exp(P);
@@ -42,4 +35,3 @@ arma::vec draw_theta(const int n, const arma::vec& theta_star,
     }
     return result;
 }
-

@@ -9,13 +9,10 @@ gpirtMCMC(
   sample_iterations,
   burn_iterations,
   vote_codes = list(yea = 1:3, nay = 4:6, missing = c(0, 7:9, NA)),
-  group = rep(0, nrow(data)),
-  prior_means = list(`0` = 0, `100` = -1, `200` = 1),
   beta_prior_means = matrix(0, nrow = 2, ncol = ncol(data)),
   beta_prior_sds = matrix(3, nrow = 2, ncol = ncol(data)),
   beta_proposal_sds = matrix(0.1, nrow = 2, ncol = ncol(data)),
-  theta_init = NULL,
-  store_fstar = FALSE
+  theta_init = NULL
 )
 }
 \arguments{
@@ -34,16 +31,6 @@ coded as 1, an element named "nay" gives the repsonses that should be coded
 as -1, and an element named "missing" gives responses that should be NA;
 only used if \code{data} must be coerced to a \code{response_matrix} object}
 
-\item{group}{An integer or character vector, or factor, of length
-\code{nrow(data)} identifying the group each respondent;
-only used if \code{data} must be coerced to a \code{response_matrix} object}
-
-\item{prior_means}{A list of length \code{length(group)} giving the prior
-mean for the ideology parameter for the respondents in each group or a
-vector of length \code{nrow(data)} giving the prior mean for each
-respondent's ideology parameter;
-only used if \code{data} must be coerced to a \code{response_matrix} object}
-
 \item{beta_prior_means}{A numeric matrix of with \code{ncol(data)} columns
 and two rows giving the prior means for the items' linear means' intercept
 and slope; by default, a matrix of zeros}
@@ -59,9 +46,6 @@ linear means' intercept and slope; by default a matrix filled with 0.1}
 \item{theta_init}{A vector of length \code{nrow(data)} giving initial values
 for the respondent ideology parameters; if NULL (the default), the initial
 values are drawn from the parameters' prior distributions.}
-
-\item{store_fstar}{A logical vector of length one determining whether the
-f* draws are stored; the default is \code{FALSE}}
 }
 \value{
 A list with elements

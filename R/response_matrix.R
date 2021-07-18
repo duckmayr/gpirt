@@ -20,12 +20,6 @@ printc <- function(wlist) {
 #'   {-1, 1, NA}. An element named "yea" gives the responses that should be
 #'   coded as 1, an element named "nay" gives the repsonses that should be coded
 #'   as -1, and an element named "missing" gives responses that should be NA
-#' @param group An integer or character vector, or factor, of length
-#'   \code{nrow(data)} identifying the group each respondent.
-#' @param prior_means A list of \code{length(group)} giving the prior mean
-#'   for the ideology parameter for the respondents in each group or a vector
-#'   of length \code{nrow(data)} giving the prior mean for each respondent's
-#'   ideology parameter
 #' @param x An R object
 #'
 #' @examples
@@ -56,9 +50,7 @@ printc <- function(wlist) {
 #' @export
 response_matrix <- function(data,
                             response_codes = list(yea = 1:3, nay = 4:6,
-                                                  missing = c(0, 7:9, NA)),
-                            group = rep(0, nrow(data)),
-                            prior_means = list(`0` = 0, `100` = -1, `200` = 1)
+                                                  missing = c(0, 7:9, NA))
                             ) {
     # Lists that are not dataframes will cause problems
     if ( is.list(data) & !is.data.frame(data) ) {
@@ -83,8 +75,6 @@ response_matrix <- function(data,
         message("Responses with value ", printc(omitted_responses), " were ",
                 "not given a response code and will be treated as missing.")
     }
-    # We convert group to a character vector (lowest common denominator)
-    group <- as.character(group)
     # Next we fix the data so that yeas are 1 and nays are -1.
     result[which(tmp %in% response_codes$yea)]     <-  1
     result[which(tmp %in% response_codes$nay)]     <- -1
@@ -103,30 +93,6 @@ response_matrix <- function(data,
         message("Item", "if"(NU > 1, "s ", " "), printc(which(unanimous_items)),
                 "if"(NU > 1, " were", " was"), " discarded as unanimous.")
     }
-    # We make sure there aren't groups or respondents without specified prior
-    # means; if there are, we fix it for the user and throw a message
-    if ( is.list(prior_means) ) {
-        if ( !all(group %in% names(prior_means)) ) {
-            omitted_groups <- setdiff(group, names(prior_means))
-            NO <- length(omitted_groups)
-            message("Group", "if"(NO > 1, "s ", " "), printc(omitted_groups),
-                    " had no specified prior mean; using 0 by default.")
-            prior_means[omitted_groups] <- 0
-        }
-    } else {
-        if ( length(prior_means) < nrow(data) ) {
-            n_missing <- nrow(data) - length(prior_means)
-            message("The last ", n_missing, " respondents had no specified ",
-                    "prior mean; using 0 by default.")
-            prior_means <- c(prior_means, rep(0, n_missing))
-        } else if ( length(prior_means) > nrow(data) ) {
-            message("There were more prior means specified than ",
-                    "respondents. Ignoring extra entries.")
-        }
-    }
-    # Now we store the group and prior mean variables as attributes
-    attr(result, "group") <- group
-    attr(result, "prior_means") <- prior_means
     # Then we class and return the result
     class(result) <- "response_matrix"
     return(result)
@@ -152,12 +118,10 @@ is.response_matrix <- function(x) {
 #' @export
 as.response_matrix <- function(x,
                                response_codes = list(yea = 1:3, nay = 4:6,
-                                                     missing = c(0, 7:9, NA)),
-                               group = rep(0, nrow(x)),
-                               prior_means = list(`0` = 0, `100` = -1, `200` = 1)
+                                                     missing = c(0, 7:9, NA))
                                ) {
     if ( !is.response_matrix(x) ) {
-        x <- response_matrix(x, response_codes, group, prior_means)
+        x <- response_matrix(x, response_codes)
     }
     return(x)
 }

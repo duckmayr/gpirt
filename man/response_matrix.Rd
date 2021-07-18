@@ -8,18 +8,14 @@
 \usage{
 response_matrix(
   data,
-  response_codes = list(yea = 1:3, nay = 4:6, missing = c(0, 7:9, NA)),
-  group = rep(0, nrow(data)),
-  prior_means = list(`0` = 0, `100` = -1, `200` = 1)
+  response_codes = list(yea = 1:3, nay = 4:6, missing = c(0, 7:9, NA))
 )
 
 is.response_matrix(x)
 
 as.response_matrix(
   x,
-  response_codes = list(yea = 1:3, nay = 4:6, missing = c(0, 7:9, NA)),
-  group = rep(0, nrow(x)),
-  prior_means = list(`0` = 0, `100` = -1, `200` = 1)
+  response_codes = list(yea = 1:3, nay = 4:6, missing = c(0, 7:9, NA))
 )
 }
 \arguments{
@@ -29,14 +25,6 @@ as.response_matrix(
 {-1, 1, NA}. An element named "yea" gives the responses that should be
 coded as 1, an element named "nay" gives the repsonses that should be coded
 as -1, and an element named "missing" gives responses that should be NA}
-
-\item{group}{An integer or character vector, or factor, of length
-\code{nrow(data)} identifying the group each respondent.}
-
-\item{prior_means}{A list of \code{length(group)} giving the prior mean
-for the ideology parameter for the respondents in each group or a vector
-of length \code{nrow(data)} giving the prior mean for each respondent's
-ideology parameter}
 
 \item{x}{An R object}
 }

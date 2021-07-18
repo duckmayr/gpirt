@@ -6,14 +6,13 @@ arma::mat draw_f(const arma::mat& f, const arma::mat& y, const arma::mat& cholS,
 
 // Function to draw fstar
 arma::mat draw_fstar(const arma::mat& f, const arma::vec& theta,
-                     const arma::vec& theta_star, const arma::mat& S00,
-                     const arma::mat& mu, const arma::mat& mu_star);
+                     const arma::vec& theta_star, const arma::mat& L,
+                     const arma::mat& mu_star);
 
 // Function to draw theta
-arma::vec draw_theta(const int n, const arma::vec& theta_star,
-                     const arma::mat& y, const arma::mat& theta_prior,
-                     const arma::uvec& groups, const arma::mat& fstar,
-                     const arma::mat& mu_star);
+arma::vec draw_theta(const arma::vec& theta_star,
+                     const arma::mat& y, const arma::vec& theta_prior,
+                     const arma::mat& fstar, const arma::mat& mu_star);
 
 // Function to draw beta
 arma::mat draw_beta(const arma::mat& beta, const arma::mat& X,
