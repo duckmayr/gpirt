@@ -21,10 +21,6 @@
 #'   vector of length \code{nrow(data)} giving the prior mean for each
 #'   respondent's ideology parameter;
 #'   only used if \code{data} must be coerced to a \code{response_matrix} object
-#' @param sf A numeric vector of length one giving the scale factor for the
-#'   covariance function for the Gaussian process prior; default is 1
-#' @param ell A numeric vector of length one giving the length scale for the
-#'   covariance function for the Gaussian process prior; default is 1
 #' @param beta_prior_means A numeric matrix of with \code{ncol(data)} columns
 #'   and two rows giving the prior means for the items' linear means' intercept
 #'   and slope; by default, a matrix of zeros
@@ -102,7 +98,6 @@ gpirtMCMC <- function(data, sample_iterations, burn_iterations,
                                         missing = c(0, 7:9, NA)),
                       group = rep(0, nrow(data)),
                       prior_means = list(`0` = 0, `100` = -1, `200` = 1),
-                      sf = 1, ell = 1,
                       beta_prior_means = matrix(0, nrow = 2, ncol = ncol(data)),
                       beta_prior_sds = matrix(3, nrow = 2, ncol = ncol(data)),
                       beta_proposal_sds = matrix(0.1, nrow = 2, ncol = ncol(data)),
@@ -127,12 +122,12 @@ gpirtMCMC <- function(data, sample_iterations, burn_iterations,
     # Now we can call the C++ sampler function
     if ( store_fstar ) {
         result <- .gpirtMCMC0(data, theta_init, sample_iterations,
-                              burn_iterations, means, groups, sf^2, 1 / (ell^2),
+                              burn_iterations, means, groups,
                               beta_prior_means, beta_prior_sds,
                               beta_proposal_sds)
     } else {
         result <- .gpirtMCMC1(data, theta_init, sample_iterations,
-                              burn_iterations, means, groups, sf^2, 1 / (ell^2),
+                              burn_iterations, means, groups,
                               beta_prior_means, beta_prior_sds,
                               beta_proposal_sds)
     }

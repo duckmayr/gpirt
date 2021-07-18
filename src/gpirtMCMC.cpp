@@ -1,10 +1,10 @@
 #include "gpirt.h"
+#include "mvnormal.h"
 
 // [[Rcpp::export(.gpirtMCMC0)]]
 Rcpp::List gpirtMCMC0(const arma::mat& y, arma::vec theta,
                       const int sample_iterations, const int burn_iterations,
                       const arma::vec& means, const arma::uvec& groups,
-                      const double sf, const double ell,
                       const arma::mat& beta_prior_means,
                       const arma::mat& beta_prior_sds,
                       const arma::mat& beta_step_sizes) {
@@ -13,9 +13,13 @@ Rcpp::List gpirtMCMC0(const arma::mat& y, arma::vec theta,
     int total_iterations = sample_iterations + burn_iterations;
     // Draw initial values of theta, f, and beta
     arma::vec mean_zeros = arma::zeros<arma::vec>(n);
-    arma::mat S = K(theta, theta, sf, ell);
+    arma::mat S = K(theta, theta);
     S.diag() += 0.001;
-    arma::mat f = rmvnorm(m, mean_zeros, S).t();
+    arma::mat cholS = arma::chol(S, "lower");
+    arma::mat f(n, m);
+    for ( arma::uword j = 0; j < m; ++j ) {
+        f.col(j) = rmvnorm(cholS);
+    }
     arma::mat beta(2, m);
     for ( arma::uword j = 0; j < m; ++j ) {
         for ( arma::uword p = 0; p < 2; ++p ) {
@@ -31,11 +35,11 @@ Rcpp::List gpirtMCMC0(const arma::mat& y, arma::vec theta,
     // Setup theta_star grid
     arma::vec theta_star = arma::regspace<arma::vec>(-5.0, 0.01, 5.0);
     int N = theta_star.n_elem;
-    arma::mat f_star(N, m);
     arma::mat Xstar(N, 2);
     Xstar.col(0) = arma::ones<arma::vec>(N);
     Xstar.col(1) = theta_star;
     arma::mat mu_star = Xstar * beta;
+    arma::mat f_star  = draw_fstar(f, theta, theta_star, S, mu, mu_star);
     // The prior probabilities for theta_star doesn't change between iterations
     int num_groups = groups.n_elem;
     arma::mat theta_prior(N, num_groups);
@@ -66,8 +70,8 @@ Rcpp::List gpirtMCMC0(const arma::mat& y, arma::vec theta,
         progress += progress_increment;
         Rcpp::checkUserInterrupt();
         // Draw new parameter values
-        f = draw_f(f, y, S, mu);
-        f_star = draw_fstar(f, theta, theta_star, S, sf, ell, mu, mu_star);
+        f = draw_f(f, y, cholS, mu);
+        f_star = draw_fstar(f, theta, theta_star, S, mu, mu_star);
         theta = draw_theta(n, theta_star, y, theta_prior, groups, f_star,
                            mu_star);
         X.col(1) = theta;
@@ -75,8 +79,9 @@ Rcpp::List gpirtMCMC0(const arma::mat& y, arma::vec theta,
                          beta_step_sizes);
         mu = X * beta;
         mu_star = Xstar * beta;
-        S = K(theta, theta, sf, ell);
+        S = K(theta, theta);
         S.diag() += 0.001;
+        cholS = arma::chol(S, "lower");
         // Store draws
         if ( iter >= burn_iterations ) {
             theta_draws.row(iter - burn_iterations + 1) = theta.t();
@@ -97,7 +102,6 @@ Rcpp::List gpirtMCMC0(const arma::mat& y, arma::vec theta,
 Rcpp::List gpirtMCMC1(const arma::mat& y, arma::vec theta,
                       const int sample_iterations, const int burn_iterations,
                       const arma::vec& means, const arma::uvec& groups,
-                      const double sf, const double ell,
                       const arma::mat& beta_prior_means,
                       const arma::mat& beta_prior_sds,
                       const arma::mat& beta_step_sizes) {
@@ -106,9 +110,13 @@ Rcpp::List gpirtMCMC1(const arma::mat& y, arma::vec theta,
     int total_iterations = sample_iterations + burn_iterations;
     // Draw initial values of theta, f, and beta
     arma::vec mean_zeros = arma::zeros<arma::vec>(n);
-    arma::mat S = K(theta, theta, sf, ell);
+    arma::mat S = K(theta, theta);
     S.diag() += 0.001;
-    arma::mat f = rmvnorm(m, mean_zeros, S).t();
+    arma::mat cholS = arma::chol(S, "lower");
+    arma::mat f(n, m);
+    for ( arma::uword j = 0; j < m; ++j ) {
+        f.col(j) = rmvnorm(cholS);
+    }
     arma::mat beta(2, m);
     for ( arma::uword j = 0; j < m; ++j ) {
         for ( arma::uword p = 0; p < 2; ++p ) {
@@ -124,11 +132,11 @@ Rcpp::List gpirtMCMC1(const arma::mat& y, arma::vec theta,
     // Setup theta_star grid
     arma::vec theta_star = arma::regspace<arma::vec>(-5.0, 0.01, 5.0);
     int N = theta_star.n_elem;
-    arma::mat f_star(N, m);
     arma::mat Xstar(N, 2);
     Xstar.col(0) = arma::ones<arma::vec>(N);
     Xstar.col(1) = theta_star;
     arma::mat mu_star = Xstar * beta;
+    arma::mat f_star  = draw_fstar(f, theta, theta_star, S, mu, mu_star);
     // The prior probabilities for theta_star doesn't change between iterations
     int num_groups = groups.n_elem;
     arma::mat theta_prior(N, num_groups);
@@ -157,8 +165,8 @@ Rcpp::List gpirtMCMC1(const arma::mat& y, arma::vec theta,
         progress += progress_increment;
         Rcpp::checkUserInterrupt();
         // Draw new parameter values
-        f = draw_f(f, y, S, mu);
-        f_star = draw_fstar(f, theta, theta_star, S, sf, ell, mu, mu_star);
+        f = draw_f(f, y, cholS, mu);
+        f_star = draw_fstar(f, theta, theta_star, S, mu, mu_star);
         theta = draw_theta(n, theta_star, y, theta_prior, groups, f_star,
                            mu_star);
         X.col(1) = theta;
@@ -166,8 +174,9 @@ Rcpp::List gpirtMCMC1(const arma::mat& y, arma::vec theta,
                          beta_step_sizes);
         mu = X * beta;
         mu_star = Xstar * beta;
-        S = K(theta, theta, sf, ell);
+        S = K(theta, theta);
         S.diag() += 0.001;
+        cholS = arma::chol(S, "lower");
         // Store draws
         if ( iter >= burn_iterations ) {
             theta_draws.row(iter - burn_iterations + 1) = theta.t();
