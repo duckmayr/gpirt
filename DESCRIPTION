@@ -19,8 +19,7 @@ Depends:
     R (>= 3.4.0)
 LinkingTo: 
     Rcpp,
-    RcppArmadillo,
-    RcppDist
+    RcppArmadillo
 Imports: 
     Rcpp
 Suggests: 
