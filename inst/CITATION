@@ -1,0 +1,55 @@
+citHeader("To cite the 'gpirt' package, please use:")
+
+year <- sub("-.*", "", meta$Date)
+note <- sprintf("R package version %s", meta$Version)
+auth <- c(
+    person(
+        given   = "JBrandon",
+        family  = "Duck-Mayr",
+        email   = "j.duckmayr@gmail.com",
+        role    = c("aut", "cre"),
+        comment = c(ORCID = "0000-0002-2231-1294")
+    ),
+    person(
+        given   = "Ryan",
+        family  = "Johnson",
+        role    = c("aut")
+    ),
+    person(
+        given   = "Roman",
+        family  = "Garnett",
+        role    = "aut",
+        comment = c(ORDCID = "0000-0002-0152-5453")
+    ),
+    person(
+        given   = "Jacob",
+        family  = "Montgomery",
+        role    = "aut"
+    )
+)
+
+bibentry(
+    bibtype = "Manual",
+    title   = "{gpirt}: Tools for a {G}aussian Process {IRT} Model",
+    author  = auth,
+    year    = year,
+    note    = note,
+    url     = "https://github.com/duckmayr/gpirt"
+)
+
+
+
+bibentry(
+    bibtype     = "InProceedings",
+    title       = "{GPIRT}: {A} {G}aussian Process Model for Item Response Theory",
+    author      = auth[-2],
+    year        = "2020",
+    booktitle   = "Proceedings of the 36th Conference on Uncertainty in Artificial Intelligence (UAI)",
+    editor      = "Jonas Peters and David Sontag",
+    pages       = "520--529",
+    publisher   = "PMLR",
+    series      = "Proceedings of Machine Learning Research",
+    url         = "http://proceedings.mlr.press/v124/duck-mayr20a.html",
+    volume      = "124"
+)
+
