@@ -27,7 +27,7 @@ burn in (unrecorded) iterations}
 
 \item{vote_codes}{A named list giving the mapping from recorded responses to
 {-1, 1, NA}. An element named "yea" gives the responses that should be
-coded as 1, an element named "nay" gives the repsonses that should be coded
+coded as 1, an element named "nay" gives the responses that should be coded
 as -1, and an element named "missing" gives responses that should be NA;
 only used if \code{data} must be coerced to a \code{response_matrix} object}
 
@@ -57,19 +57,18 @@ A list with elements
                   \code{m} columns, and \code{sample_iterations} + 1 slices.}
       \item{f}{The f parameter draws, stored in an array with \code{n} rows,
                \code{m} columns, and \code{sample_iterations} + 1 slices.}
-      \item{fstar}{The f* parameter draws, stored in an array with 1001 rows,
-                   \code{m} columns, and \code{sample_iterations} + 1 slices.
-                   The first row corresponds to f* draws for a theta value
-                   of -5.0, the second to f* draws for a theta value of
-                   -4.99, ..., and the last to f* draws for a theta value
-                   of 5.0.}
+      \item{IRFs}{Estimated item response functions for the items, with one
+                  column per item, or \code{m} columns, and 1001 rows.
+                  The first row has the probabilities of a 1 response
+                  for a theta value of -5.0, the second the probability for
+                  each item of a 1 response for a theta value of -4.99,
+                  ..., and the last for a theta value of 5.0.}
   }
 }
 \description{
 Provides posterior samples for the GP-IRT.
 }
 \examples{
-ilogit <- function(x) 1 / (1 + exp(-x)) # inverse logit function
 ##### Monotonic IRT example ####
 ## Simulate data
 gen_responses <- function(theta, alpha, beta) {
@@ -79,7 +78,7 @@ gen_responses <- function(theta, alpha, beta) {
     responses <- matrix(0, n, m)
     for ( j in 1:m ) {
         for ( i in 1:n ) {
-            p <- ilogit(alpha[j] + beta[j] * theta[i])
+            p <- plogis(alpha[j] + beta[j] * theta[i])
             responses[i, j] <- sample(0:1, 1, prob = c(1 - p, p))
         }
     }

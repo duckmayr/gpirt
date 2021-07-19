@@ -102,8 +102,13 @@ Rcpp::List gpirtMCMC(const arma::mat& y, arma::vec theta,
         // Update IRF estimates
         IRFs += f_star;
     }
-    IRFs *= (1.0 / (double)sample_iterations);
     Rprintf("\r100.000 %% complete\n");
+    IRFs *= (1.0 / (double)sample_iterations);
+    for ( arma::uword j = 0; j < m; ++j ) {
+        for ( arma::uword i = 0; i < N; ++i ) {
+            IRFs(i, j) = R::plogis(IRFs(i, j), 0.0, 1.0, 1, 0);
+        }
+    }
     Rcpp::List result = Rcpp::List::create(Rcpp::Named("theta", theta_draws),
                                            Rcpp::Named("beta", beta_draws),
                                            Rcpp::Named("f", f_draws),
