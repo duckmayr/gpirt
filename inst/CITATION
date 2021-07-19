@@ -11,7 +11,7 @@ auth <- c(
         comment = c(ORCID = "0000-0002-2231-1294")
     ),
     person(
-        given   = "Ryan",
+        given   = c("T.", "Ryan"),
         family  = "Johnson",
         role    = c("aut")
     ),
