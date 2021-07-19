@@ -24,7 +24,7 @@ The `gpirt` package provides an MCMC sampler and related tools for a
 Unlike other IRT models that make strong assumptions about the functional form
 of the "item response function," or the function mapping respondents' latent
 trait to their response to items, we place a GP prior over the distribution of
-functions mapping latent traits to responses, and simulataneously learn these
+functions mapping latent traits to responses, and simultaneously learn these
 functions and the respondents' latent traits.
 
 For readers unfamiliar with Gaussian processes, we refer them @RW:2006,
@@ -33,6 +33,8 @@ In what follows, we first detail our MCMC algorithm for sampling the model
 parameters' posterior distribution.
 We then walk through a simple but complete example, from data preparation, to
 prior specification and sampling, and analysis of results.
+For readers seeking a more detailed presentation of the GPIRT model,
+please refer to our paper introducing the model [@GPIRTpaper].
 
 # Algorithm
 
@@ -45,7 +47,7 @@ We include at the outset, a brief explanation of the notation used throughout:
   item.
 - $\theta$ is the $n \times d$ dimension matrix of respondents' latent traits,
   which we will commonly call ideology (as would be the case in the authors'
-  substantive applications -- political science). Currently the algorithm is
+  substantive applications---political science). Currently the algorithm is
   only implemented for $d = 1$.
 - $f_j$ is the latent function mapping ideology to responses for item $j$,
   through a sigmoid function; i.e., $\Pr(y_{ij} = 1) = \sigma(f_j(\theta_i))$.
@@ -60,27 +62,18 @@ parameter at iteration $t$ of our algorithm.
 
 ## Priors
 
-We place a normal prior over each $\theta_i$;
+We place a standard normal prior over each $\theta_i$;
+$\theta \sim \mathcal{N}\left( 0, 1\right)$.
 the variance for all ideology parameter priors is 1,
 but the prior means may vary.
-Specifically, we assume (at least some of) the respondents can be classified
-into different groups (in our political science application, parties),
-and allow the user to specify a prior mean $\mu_g$ for each group $g$.
-If a group or respondent is not assigned a prior mean by the user,
-we assume $\mu_g = 0$ for that $g$.
-
-We place a GP prior over the $f_j$, with a mean function of zero,
-and covariance given by the squared exponential covariance function
-(also called the radial basis function)
+We place a GP prior over the $f_j$.
+We support a mean function of zero, a linear mean, or a quadratic mean.
+We use the squared exponential covariance function
+(also called the radial basis function),
 
 $$
-K(\theta, \theta') = \sigma^2
-\exp\left(-\frac{\| \theta - \theta' \|^2}{2\ell^2}\right),
+K(\theta, \theta') = \exp\left(-0.5 \| \theta - \theta' \|^2 \right).
 $$
-
-where $\ell$ is the *length scale*,
-governing how quickly $f_j$ can change,
-and $\sigma$ is the *scale factor*, or the function variance of $f_j$.
 
 ## MCMC Algorithm
 
@@ -88,7 +81,7 @@ Our MCMC algorithm proceeds as follows:
 
 1. Initialize $f$ and $\theta$: $(f^{0}, \theta^{0})$.
     a. We allow users to specify initial values for $\theta$; otherwise,
-       $\theta^0$ is drawn from the prior distributions of the $\theta_i$.
+       $\theta^0$ is drawn from the prior distribution of $\theta$.
     b. Draw the $f_j$ from their prior distribution, i.e. a normal distribution
        with mean zero and covariance $K(\theta^0, \theta^0)$.
 2. For $t = 1, ..., T$:
@@ -98,15 +91,23 @@ Our MCMC algorithm proceeds as follows:
        available [here](https://homepages.inf.ed.ac.uk/imurray2/pub/10ess/).
     b. Given $f^t$ and $\theta^{t-1}$, draw $f^* = \{ f_j(\theta^*) \}$
        for $\theta^* = \{-5, -4.99, \ldots, 4.99, 5\}$ from
-       $$
-       f_j^t(\theta^*) \sim \mathcal{N}(
-         K(\theta^*, \theta^{t-1})\, K(\theta^{t-1}, \theta^{t-1})^{-1}f_j^t,\
-         K(\theta^*, \theta^*) - 
-         K(\theta^*, \theta^{t-1})\,
-         K(\theta^{t-1}, \theta^{t-1})^{-1}\,
-         K(\theta^{t-1}, \theta^*)
-         )
-       $$
+       
+       \begin{align}
+          f_j^t(\theta^*) \mid \theta^\ast, \theta^{t-1}, f^t, \beta
+          & \sim \mathcal{N}\left(\mathbf{m}^\ast, \mathbf{C}^\ast\right), \\
+          \mathbf{m}^\ast & =
+          \mu(\boldsymbol\theta^\ast) +
+          K(\boldsymbol\theta^\ast, \boldsymbol\theta)\,
+          K(\boldsymbol\theta, \boldsymbol\theta)^{-1}
+          \bigl(\mathbf{f}_i - \mu(\boldsymbol\theta)\bigr),
+          \\
+          \mathbf{C}^\ast &=
+          K(\boldsymbol\theta^\ast, \boldsymbol\theta^\ast) -
+          K(\boldsymbol\theta^\ast, \boldsymbol\theta)
+          K(\boldsymbol\theta, \boldsymbol\theta)^{-1}
+          K(\boldsymbol\theta, \boldsymbol\theta^\ast)
+       \end{align}
+       
        (see @RW:2006, equation 2.19).
     c. Use inverse transform sampling to draw $\theta^t$ by brute-force
        computation of the conditional posterior on the grid $\theta^*$.
@@ -124,7 +125,8 @@ data("senate116")
 ```
 
 The data from Voteview is in a tidy format,^[See `tidyr`'s "Tidy Data" Vignette]
-but because we want a matrix of responses, we will actually have to make it messy.
+but because we want a matrix of responses,
+we will actually have to make it messy.
 Here is a `tidyverse` solution for doing so:
 
 ```{r reshape_data}
@@ -148,7 +150,8 @@ responses   <- as.response_matrix(responses)
 str(responses)
 ```
 
-Note the messages printed by `as.response_matrix()`, lets us know which unanimous items had to be discarded).
+(Note the messages printed by `as.response_matrix()` let us know which
+unanimous items had to be discarded).
 Now we can run our sampler:
 
 ```{r run_sampler, eval=FALSE}
@@ -157,8 +160,9 @@ samples <- gpirtMCMC(responses, sample_iterations = 5000, burn_iterations = 0)
 str(samples)
 ```
 
-Then we can get estimates of our ideology parameters (by taking the mean of the columns of `samples[["theta"]]`) without ever having to
-assume the precise functional form between Senators' ideology and their roll
-call vote responses.
+Then we can get estimates of our ideology parameters
+(by taking the mean of the columns of `samples[["theta"]]`)
+without ever having to assume the precise functional form
+between Senators' ideology and their roll call vote responses.
 
 # References
