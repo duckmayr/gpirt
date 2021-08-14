@@ -24,14 +24,15 @@ d <- data.frame(theta = theta, p = p, q = q)
 g <- ggplot(data = d, mapping = aes(x = theta, y = p)) +
     geom_line(group = 1) +
     geom_line(aes(y = q), group = 1, linetype = "dashed") +
-    ylim(0, 1) +
+    # ylim(0, 1) +
+    scale_y_continuous(breaks = c(0, 0.5, 1), limits = c(0, 1)) +
     xlab(expression(theta)) +
     ylab("P(y = 1)") +
     theme_classic() +
     theme_transparent() +
     theme(
-        axis.text = element_text(colour = "black", size = 12),
-        axis.title = element_text(size = 12),
+        axis.text = element_text(colour = "black", size = 18),
+        axis.title = element_text(size = 18),
         axis.ticks = element_blank()
     )
 sticker(
