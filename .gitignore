@@ -41,3 +41,14 @@ vignettes/*.pdf
 # Shiny token, see https://shiny.rstudio.com/articles/shinyapps.html
 rsconnect/
 inst/doc
+
+# compile config
+config.log
+config.status
+
+# scripts to build ordinal data from catSurv package
+data-raw/catSurv_data.R
+data-raw/dataverse_files
+data-raw/*.csv
+data/nfc.rda
+data/nte.rda
