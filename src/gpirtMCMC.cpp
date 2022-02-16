@@ -2,7 +2,6 @@
 #include "mvnormal.h"
 
 // [[Rcpp::export(.gpirtMCMC)]]
-// [[Rcpp::depends(RcppArmadillo)]]
 Rcpp::List gpirtMCMC(const arma::mat& y, arma::vec theta,
                      const int sample_iterations, const int burn_iterations,
                      const arma::mat& beta_prior_means,
