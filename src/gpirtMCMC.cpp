@@ -40,7 +40,7 @@ Rcpp::List gpirtMCMC(const arma::mat& y, arma::vec theta,
     Xstar.col(1) = theta_star;
     arma::mat mu_star = Xstar * beta;
     arma::mat f_star  = draw_fstar(f, theta, theta_star, cholS, mu_star);
-    arma::mat IRFs(N, m, arma::fill::zeros);
+    arma::cube IRFs(N, m, sample_iterations, arma::fill::zeros);
     // The prior probabilities for theta_star doesn't change between iterations
     arma::vec theta_prior(N);
     for ( arma::uword i = 0; i < N; ++i ) {
@@ -111,15 +111,15 @@ Rcpp::List gpirtMCMC(const arma::mat& y, arma::vec theta,
         beta_draws.slice(iter + 1) = beta;
         f_draws.slice(iter + 1) = f;
         // Update IRF estimates
-        IRFs += f_star;
+        IRFs.slice(iter) = f_star;
     }
     Rprintf("\r100.000 %% complete\n");
-    IRFs *= (1.0 / (double)sample_iterations);
-    for ( arma::uword j = 0; j < m; ++j ) {
-        for ( arma::uword i = 0; i < N; ++i ) {
-            IRFs(i, j) = R::plogis(IRFs(i, j), 0.0, 1.0, 1, 0);
-        }
-    }
+    // IRFs *= (1.0 / (double)sample_iterations);
+    // for ( arma::uword j = 0; j < m; ++j ) {
+    //     for ( arma::uword i = 0; i < N; ++i ) {
+    //         IRFs(i, j) = R::plogis(IRFs(i, j), 0.0, 1.0, 1, 0);
+    //     }
+    // }
     Rcpp::List result = Rcpp::List::create(Rcpp::Named("theta", theta_draws),
                                            Rcpp::Named("beta", beta_draws),
                                            Rcpp::Named("f", f_draws),
