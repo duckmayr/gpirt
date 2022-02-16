@@ -2,7 +2,8 @@
 
 arma::vec draw_theta(const arma::vec& theta_star,
                      const arma::mat& y, const arma::vec& theta_prior,
-                     const arma::mat& fstar, const arma::mat& mu_star) {
+                     const arma::mat& fstar, const arma::mat& mu_star,
+                     const arma::vec& thresholds) {
     arma::uword n = y.n_rows;
     arma::uword m = y.n_cols;
     arma::uword N = theta_star.n_elem;
@@ -15,7 +16,7 @@ arma::vec draw_theta(const arma::vec& theta_star,
         for ( arma::uword k = 0; k < N; ++k ) {
             // Then for each value in theta_star,
             // get the log prior + the log likelihood
-            P[k] = theta_prior[k] + ll(fstar.row(k).t(), responses);
+            P[k] = theta_prior[k] + ll(fstar.row(k).t(), responses, thresholds);
         }
         // Exponeniate, cumsum, then scale to [0, 1] for the "CDF"
         P = arma::exp(P);

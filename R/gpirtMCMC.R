@@ -12,7 +12,8 @@
 #'   {-1, 1, NA}. An element named "yea" gives the responses that should be
 #'   coded as 1, an element named "nay" gives the responses that should be coded
 #'   as -1, and an element named "missing" gives responses that should be NA;
-#'   only used if \code{data} must be coerced to a \code{response_matrix} object
+#'   only used if \code{data} must be coerced to a \code{response_matrix} object.
+#'   If NULL, then ordinal regression will be performed.
 #' @param beta_prior_means A numeric matrix of with \code{ncol(data)} columns
 #'   and two rows giving the prior means for the items' linear means' intercept
 #'   and slope; by default, a matrix of zeros
@@ -25,6 +26,9 @@
 #' @param theta_init A vector of length \code{nrow(data)} giving initial values
 #'   for the respondent ideology parameters; if NULL (the default), the initial
 #'   values are drawn from the parameters' prior distributions.
+#' @param thresholds A vector of length \code{C+1} where \code{C} is the number
+#'   of all categories; if NULL (the default), the values are chosen from -Inf to Inf
+#'    of length \code{C+1} with each y having equal probablity under prior mean.
 #'
 #' @return A list with elements
 #'   \describe{
@@ -88,17 +92,34 @@ gpirtMCMC <- function(data, sample_iterations, burn_iterations,
                       beta_prior_means = matrix(0, nrow = 2, ncol = ncol(data)),
                       beta_prior_sds = matrix(3, nrow = 2, ncol = ncol(data)),
                       beta_proposal_sds = matrix(0.1, nrow = 2, ncol = ncol(data)),
-                      theta_init = NULL) {
+                      theta_init = NULL, thresholds = NULL) {
     # First we make sure our data are in the proper format:
-    data <- as.response_matrix(data, vote_codes)
+    if ( !is.null(vote_codes) ){
+        data <- as.response_matrix(data, vote_codes)
+    }
+    
     # Now we make sure we have initial values for theta
     if ( is.null(theta_init) ) {
         theta_init  <- rnorm(nrow(data))
     }
+    # Now we make sure we have initial values for thresholds
+    if ( is.null(thresholds) ) {
+        if(is.matrix(data)){
+            unique_ys = unique(data)
+        }else{
+            unique_ys = unique(unlist(data))
+        }   
+        C = length(unique(unique_ys[!is.na(unique_ys)]))
+        thresholds <- c(-Inf)
+        for(i in 1:(C-1)){
+            thresholds = c(thresholds, R::qnorm(i/C, 0, 1, 1, 0))
+        }
+        thresholds = c(thresholds, Inf)
+    }
     # Now we can call the C++ sampler function
     result <- .gpirtMCMC(
         data, theta_init, sample_iterations, burn_iterations,
-        beta_prior_means, beta_prior_sds, beta_proposal_sds
+        beta_prior_means, beta_prior_sds, beta_proposal_sds, thresholds
     )
     # And return the result
     return(result)

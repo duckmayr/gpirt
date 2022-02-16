@@ -6,7 +6,8 @@ Rcpp::List gpirtMCMC(const arma::mat& y, arma::vec theta,
                      const int sample_iterations, const int burn_iterations,
                      const arma::mat& beta_prior_means,
                      const arma::mat& beta_prior_sds,
-                     const arma::mat& beta_step_sizes) {
+                     const arma::mat& beta_step_sizes,
+                     const arma::vec& thresholds) {
     arma::uword n = y.n_rows;
     arma::uword m = y.n_cols;
     int total_iterations = sample_iterations + burn_iterations;
@@ -65,12 +66,17 @@ Rcpp::List gpirtMCMC(const arma::mat& y, arma::vec theta,
         progress += progress_increment;
         Rcpp::checkUserInterrupt();
         // Draw new parameter values
-        f = draw_f(f, y, cholS, mu);
+        f = draw_f(f, y, cholS, mu, thresholds);
         f_star = draw_fstar(f, theta, theta_star, cholS, mu_star);
-        theta = draw_theta(theta_star, y, theta_prior, f_star, mu_star);
+        theta = draw_theta(theta_star, y, theta_prior, f_star, mu_star, thresholds);
         X.col(1) = theta;
+        // Update f for new theta
+        // arma::vec idx = (theta+5)/0.01;
+        // for (arma::uword k = 0; k < n; ++k){
+        //     f.row(k) = f_star.row(int(idx[k]));
+        // }
         beta = draw_beta(beta, X, y, f, beta_prior_means, beta_prior_sds,
-                         beta_step_sizes);
+                         beta_step_sizes, thresholds);
         mu = X * beta;
         mu_star = Xstar * beta;
         S = K(theta, theta);
@@ -84,12 +90,17 @@ Rcpp::List gpirtMCMC(const arma::mat& y, arma::vec theta,
         progress += progress_increment;
         Rcpp::checkUserInterrupt();
         // Draw new parameter values
-        f = draw_f(f, y, cholS, mu);
+        f = draw_f(f, y, cholS, mu, thresholds);
         f_star = draw_fstar(f, theta, theta_star, cholS, mu_star);
-        theta = draw_theta(theta_star, y, theta_prior, f_star, mu_star);
+        theta = draw_theta(theta_star, y, theta_prior, f_star, mu_star, thresholds);
         X.col(1) = theta;
+        // Update f for new theta
+        // arma::vec idx = (theta+5)/0.01;
+        // for (arma::uword k = 0; k < n; ++k){
+        //     f.row(k) = f_star.row(int(idx[k]));
+        // }
         beta = draw_beta(beta, X, y, f, beta_prior_means, beta_prior_sds,
-                         beta_step_sizes);
+                         beta_step_sizes, thresholds);
         mu = X * beta;
         mu_star = Xstar * beta;
         S = K(theta, theta);
