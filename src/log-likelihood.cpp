@@ -1,4 +1,5 @@
 #include <RcppArmadillo.h>
+#include "gpirt.h"
 
 // LOG LIKELIHOOD FUNCTION
 /* (Explainer using LaTeX if you want to copy/paste/compile to view pretty)
@@ -73,4 +74,33 @@ double ll_bar(const arma::vec& f, const arma::vec& y, const arma::vec& mu, const
         result += std::log(R::pnorm(z2, 0, 1, 1, 0)-R::pnorm(z1, 0, 1, 1, 0));
     }
     return result;
+}
+
+
+arma::vec delta_to_threshold(const arma::vec& deltas){
+    // delta = (b_1, log(b_2-b_1), ..., log(b_{C-1}-b_{C-2}))
+    // b_0 = -inf, b_C = +inf
+    int C = deltas.n_elem + 1;
+    arma::vec thresholds(C+1, arma::fill::zeros);
+    thresholds[0] = -std::numeric_limits<double>::infinity();
+    thresholds[1] = deltas[0];
+    thresholds[C] = std::numeric_limits<double>::infinity();
+    for (arma::uword i = 1; i < C-1; i++)
+    {
+        thresholds[i+1] = thresholds[i] + std::exp(deltas[i]);
+    }
+    return thresholds;
+}
+
+arma::vec threshold_to_delta(const arma::vec& thresholds){
+    // delta = (b_1, log(b_2-b_1), ..., log(b_{C-1}-b_{C-2}))
+    // b_0 = -inf, b_C = +inf
+    int C = thresholds.n_elem - 1;
+    arma::vec deltas(C-1, arma::fill::zeros);
+    deltas[0] = thresholds[1];
+    for (arma::uword i = 1; i < C-1; i++)
+    {
+        deltas[i] = std::log(thresholds[i+1]-thresholds[i]);
+    }
+    return deltas;
 }

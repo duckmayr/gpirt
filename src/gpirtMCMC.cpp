@@ -7,9 +7,10 @@ Rcpp::List gpirtMCMC(const arma::mat& y, arma::vec theta,
                      const arma::mat& beta_prior_means,
                      const arma::mat& beta_prior_sds,
                      const arma::mat& beta_step_sizes,
-                     const arma::vec& thresholds) {
+                     arma::vec thresholds) {
     arma::uword n = y.n_rows;
     arma::uword m = y.n_cols;
+    arma::uword C = thresholds.n_elem - 1;
     int total_iterations = sample_iterations + burn_iterations;
     // Draw initial values of theta, f, and beta
     arma::vec mean_zeros = arma::zeros<arma::vec>(n);
@@ -47,13 +48,15 @@ Rcpp::List gpirtMCMC(const arma::mat& y, arma::vec theta,
         theta_prior[i] = R::dnorm(theta_star[i], 0.0, 1.0, 1);
     }
     // Setup results storage
-    arma::mat theta_draws(sample_iterations + 1, n);
-    arma::cube beta_draws(2, m, sample_iterations + 1);
-    arma::cube f_draws(n, m, sample_iterations + 1);
+    arma::mat theta_draws(sample_iterations, n);
+    arma::cube beta_draws(2, m, sample_iterations);
+    arma::cube f_draws(n, m, sample_iterations);
+    arma::mat threshold_draws(sample_iterations, C+1);
     // Store initial values
-    theta_draws.row(0)  = theta.t();
-    beta_draws.slice(0) = beta;
-    f_draws.slice(0)    = f;
+    // theta_draws.row(0)  = theta.t();
+    // beta_draws.slice(0) = beta;
+    // f_draws.slice(0)    = f;
+    // threshold_draws.row(0) = thresholds.t();
     // Information for progress bar:
     double progress_increment = (1.0 / total_iterations) * 100.0;
     double progress = 0.0;
@@ -77,6 +80,7 @@ Rcpp::List gpirtMCMC(const arma::mat& y, arma::vec theta,
         // }
         beta = draw_beta(beta, X, y, f, beta_prior_means, beta_prior_sds,
                          beta_step_sizes, thresholds);
+        thresholds = draw_threshold(thresholds, y, f, mu);
         mu = X * beta;
         mu_star = Xstar * beta;
         S = K(theta, theta);
@@ -101,15 +105,17 @@ Rcpp::List gpirtMCMC(const arma::mat& y, arma::vec theta,
         // }
         beta = draw_beta(beta, X, y, f, beta_prior_means, beta_prior_sds,
                          beta_step_sizes, thresholds);
+        thresholds = draw_threshold(thresholds, y, f, mu);
         mu = X * beta;
         mu_star = Xstar * beta;
         S = K(theta, theta);
         S.diag() += 0.001;
         cholS = arma::chol(S, "lower");
         // Store draws
-        theta_draws.row(iter + 1) = theta.t();
-        beta_draws.slice(iter + 1) = beta;
-        f_draws.slice(iter + 1) = f;
+        theta_draws.row(iter) = theta.t();
+        beta_draws.slice(iter) = beta;
+        f_draws.slice(iter) = f;
+        threshold_draws.row(iter) = thresholds.t();
         // Update IRF estimates
         IRFs.slice(iter) = f_star;
     }
@@ -123,6 +129,7 @@ Rcpp::List gpirtMCMC(const arma::mat& y, arma::vec theta,
     Rcpp::List result = Rcpp::List::create(Rcpp::Named("theta", theta_draws),
                                            Rcpp::Named("beta", beta_draws),
                                            Rcpp::Named("f", f_draws),
+                                           Rcpp::Named("threshold", threshold_draws),
                                            Rcpp::Named("IRFs", IRFs));
     return result;
 }

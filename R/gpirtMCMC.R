@@ -112,7 +112,7 @@ gpirtMCMC <- function(data, sample_iterations, burn_iterations,
         C = length(unique(unique_ys[!is.na(unique_ys)]))
         thresholds <- c(-Inf)
         for(i in 1:(C-1)){
-            thresholds = c(thresholds, R::qnorm(i/C, 0, 1, 1, 0))
+            thresholds = c(thresholds, qnorm(i/C, 0, 1, 1, 0))
         }
         thresholds = c(thresholds, Inf)
     }

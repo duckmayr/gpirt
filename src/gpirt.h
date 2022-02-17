@@ -21,6 +21,10 @@ arma::mat draw_beta(const arma::mat& beta, const arma::mat& X,
                     const arma::mat& prior_means, const arma::mat& prior_sds,
                     const arma::mat& proposal_sds, const arma::vec& thresholds);
 
+// Function to draw thresholds
+arma::vec draw_threshold(const arma::vec& thresholds, const arma::mat& y,
+                    const arma::mat& f, const arma::mat& mu);
+
 // Covariance function
 arma::mat K(const arma::vec& x1, const arma::vec& x2);
 
@@ -32,3 +36,6 @@ arma::mat K(const arma::vec& x1, const arma::vec& x2);
 double ll(const arma::vec& f, const arma::vec& y, const arma::vec& thresholds);
 double ll_bar(const arma::vec& f, const arma::vec& y, const arma::vec& mu, const arma::vec& thresholds);
 
+// convertion between thresholds and delta thresholds
+arma::vec delta_to_threshold(const arma::vec& deltas);
+arma::vec threshold_to_delta(const arma::vec& thresholds);
