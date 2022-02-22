@@ -3,7 +3,7 @@
 arma::vec draw_theta(const arma::vec& theta_star,
                      const arma::mat& y, const arma::vec& theta_prior,
                      const arma::mat& fstar, const arma::mat& mu_star,
-                     const arma::vec& thresholds) {
+                     const arma::mat& thresholds) {
     arma::uword n = y.n_rows;
     arma::uword m = y.n_cols;
     arma::uword N = theta_star.n_elem;

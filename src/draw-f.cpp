@@ -19,7 +19,7 @@
  * S is the covariance matrix,
  */
 arma::vec ess(const arma::vec& f, const arma::vec& y, const arma::mat& cholS,
-              const arma::mat& mu, const arma::vec& thresholds) {
+              const arma::vec& mu, const arma::vec& thresholds) {
     arma::uword n = f.n_elem;
     // First we draw "an ellipse" -- a vector drawn from a multivariate
     // normal with mean zero and covariance Sigma.
@@ -62,12 +62,12 @@ arma::vec ess(const arma::vec& f, const arma::vec& y, const arma::mat& cholS,
 // Function to draw f
 
 arma::mat draw_f(const arma::mat& f, const arma::mat& y, const arma::mat& cholS,
-                 const arma::mat& mu, const arma::vec& thresholds) {
+                 const arma::mat& mu, const arma::mat& thresholds) {
     arma::uword n = f.n_rows;
     arma::uword m = f.n_cols;
     arma::mat result(n, m);
     for ( arma::uword j = 0; j < m; ++j) {
-        result.col(j) = ess(f.col(j), y.col(j), cholS, mu.col(j), thresholds);
+        result.col(j) = ess(f.col(j), y.col(j), cholS, mu.col(j), thresholds.row(j).t());
     }
     return result;
 }

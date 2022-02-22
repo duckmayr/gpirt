@@ -110,11 +110,15 @@ gpirtMCMC <- function(data, sample_iterations, burn_iterations,
             unique_ys = unique(unlist(data))
         }   
         C = length(unique(unique_ys[!is.na(unique_ys)]))
-        thresholds <- c(-Inf)
-        for(i in 1:(C-1)){
-            thresholds = c(thresholds, qnorm(i/C, 0, 1, 1, 0))
+        m = ncol(data)
+        thresholds <- matrix(0, nrow=m, ncol=C+1)
+        thresholds[,1] <- -Inf
+        for(j in 1:m){
+            for(i in 1:(C-1)){
+                thresholds[j,(1+i)] = qnorm(i/C, 0, 1, 1, 0)
+            }
         }
-        thresholds = c(thresholds, Inf)
+        thresholds[, C+1] = Inf
     }
     # Now we can call the C++ sampler function
     result <- .gpirtMCMC(

@@ -7,10 +7,10 @@ Rcpp::List gpirtMCMC(const arma::mat& y, arma::vec theta,
                      const arma::mat& beta_prior_means,
                      const arma::mat& beta_prior_sds,
                      const arma::mat& beta_step_sizes,
-                     arma::vec thresholds) {
+                     arma::mat thresholds) {
     arma::uword n = y.n_rows;
     arma::uword m = y.n_cols;
-    arma::uword C = thresholds.n_elem - 1;
+    arma::uword C = thresholds.n_cols - 1;
     int total_iterations = sample_iterations + burn_iterations;
     // Draw initial values of theta, f, and beta
     arma::vec mean_zeros = arma::zeros<arma::vec>(n);
@@ -51,7 +51,7 @@ Rcpp::List gpirtMCMC(const arma::mat& y, arma::vec theta,
     arma::mat theta_draws(sample_iterations, n);
     arma::cube beta_draws(2, m, sample_iterations);
     arma::cube f_draws(n, m, sample_iterations);
-    arma::mat threshold_draws(sample_iterations, C+1);
+    arma::cube threshold_draws(C+1, m, sample_iterations);
     // Store initial values
     // theta_draws.row(0)  = theta.t();
     // beta_draws.slice(0) = beta;
@@ -115,7 +115,7 @@ Rcpp::List gpirtMCMC(const arma::mat& y, arma::vec theta,
         theta_draws.row(iter) = theta.t();
         beta_draws.slice(iter) = beta;
         f_draws.slice(iter) = f;
-        threshold_draws.row(iter) = thresholds.t();
+        threshold_draws.slice(iter) = thresholds.t();
         // Update IRF estimates
         IRFs.slice(iter) = f_star;
     }
