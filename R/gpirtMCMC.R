@@ -8,6 +8,8 @@
 #'   of samples to record
 #' @param burn_iterations An integer vector of length one giving the number of
 #'   burn in (unrecorded) iterations
+#' @param THIN An integer giving the number of
+#'   thins per sample iterations
 #' @param vote_codes A named list giving the mapping from recorded responses to
 #'   {-1, 1, NA}. An element named "yea" gives the responses that should be
 #'   coded as 1, an element named "nay" gives the responses that should be coded
@@ -86,12 +88,11 @@
 #' str(samples)
 #'
 #' @export
-gpirtMCMC <- function(data, sample_iterations, burn_iterations,
+gpirtMCMC <- function(data, sample_iterations, burn_iterations, THIN=1, 
                       vote_codes = list(yea = 1:3, nay = 4:6,
                                         missing = c(0, 7:9, NA)),
                       beta_prior_means = matrix(0, nrow = 2, ncol = ncol(data)),
                       beta_prior_sds = matrix(3, nrow = 2, ncol = ncol(data)),
-                      beta_proposal_sds = matrix(0.1, nrow = 2, ncol = ncol(data)),
                       theta_init = NULL, thresholds = NULL) {
     # First we make sure our data are in the proper format:
     if ( !is.null(vote_codes) ){
@@ -122,8 +123,8 @@ gpirtMCMC <- function(data, sample_iterations, burn_iterations,
     }
     # Now we can call the C++ sampler function
     result <- .gpirtMCMC(
-        data, theta_init, sample_iterations, burn_iterations,
-        beta_prior_means, beta_prior_sds, beta_proposal_sds, thresholds
+        data, theta_init, sample_iterations, burn_iterations, THIN,
+        beta_prior_means, beta_prior_sds, thresholds
     )
     # And return the result
     return(result)

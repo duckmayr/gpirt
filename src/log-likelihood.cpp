@@ -56,7 +56,7 @@ double ll(const arma::vec& f, const arma::vec& y, const arma::mat& thresholds) {
         int c = int(y[j]);
         double z1 = thresholds(j, c-1) - f[j];
         double z2 = thresholds(j, c) - f[j];
-        result += std::log(R::pnorm(z2, 0, 1, 1, 0)-R::pnorm(z1, 0, 1, 1, 0));
+        result += std::log(R::pnorm(z2, 0, 1, 1, 0)-R::pnorm(z1, 0, 1, 1, 0)+1e-6);
     }
     return result;
 }
@@ -72,7 +72,7 @@ double ll_bar(const arma::vec& f, const arma::vec& y, const arma::vec& mu, const
         int c = int(y[i]);
         double z1 = thresholds[c-1] - g[i];
         double z2 = thresholds[c] - g[i];
-        result += std::log(R::pnorm(z2, 0, 1, 1, 0)-R::pnorm(z1, 0, 1, 1, 0));
+        result += std::log(R::pnorm(z2, 0, 1, 1, 0)-R::pnorm(z1, 0, 1, 1, 0)+1e-6);
     }
     return result;
 }

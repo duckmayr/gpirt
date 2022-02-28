@@ -25,7 +25,6 @@ arma::vec ess_threshold(const arma::vec& delta, const arma::vec& f,
     // First we draw "an ellipse" -- a vector drawn from a multivariate
     // normal with mean zero and covariance Sigma.
     arma::vec v(C-1, arma::fill::ones);
-    v *= 0.25;
     arma::mat S = arma::diagmat(v);
     arma::mat cholS = arma::chol(S, "lower");
     arma::vec nu = rmvnorm(cholS);
