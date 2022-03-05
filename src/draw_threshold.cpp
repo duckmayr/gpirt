@@ -18,10 +18,10 @@
  * y is the response, and
  * S is the covariance matrix,
  */
-arma::vec ess_threshold(const arma::vec& delta, const arma::vec& f,
-                const arma::vec& y, const arma::vec& mu) {
+arma::vec ess_threshold(const arma::vec& delta, const arma::mat& f,
+                const arma::mat& y, const arma::mat& mu) {
     arma::uword C = delta.n_elem + 1;
-    arma::uword n = mu.n_elem;
+    arma::uword m = y.n_cols;
     // First we draw "an ellipse" -- a vector drawn from a multivariate
     // normal with mean zero and covariance Sigma.
     arma::vec v(C-1, arma::fill::ones);
@@ -32,9 +32,9 @@ arma::vec ess_threshold(const arma::vec& delta, const arma::vec& f,
     double u = R::runif(0.0, 1.0);
     double log_y = std::log(u);
     arma::vec thresholds = delta_to_threshold(delta);
-    for (arma::uword i = 0; i < n; i++)
+    for (arma::uword i = 0; i < m; i++)
     {
-        log_y += ll_bar(f.subvec(i,i), y.subvec(i,i), mu.subvec(i,i), thresholds);
+        log_y += ll_bar(f.col(i), y.col(i), mu.col(i), thresholds);
     }
 
     // For our while loop condition:
@@ -55,9 +55,9 @@ arma::vec ess_threshold(const arma::vec& delta, const arma::vec& f,
         // If the log likelihood is over our threshold, accept
         double log_y_prime = 0;
         arma::vec thresholds_prime = delta_to_threshold(delta_prime);
-        for (arma::uword i = 0; i < n; i++)
+        for (arma::uword i = 0; i < m; i++)
         {
-            log_y_prime += ll_bar(f.subvec(i,i), y.subvec(i,i), mu.subvec(i,i), thresholds_prime);
+            log_y_prime += ll_bar(f.col(i), y.col(i), mu.col(i), thresholds_prime);
         }
         if ( log_y_prime > log_y ) {
             reject = false;
@@ -78,16 +78,12 @@ arma::vec ess_threshold(const arma::vec& delta, const arma::vec& f,
 
 // Function to draw thresholds
 
-arma::mat draw_threshold(const arma::mat& thresholds, const arma::mat& y,
+arma::vec draw_threshold(const arma::vec& thresholds, const arma::mat& y,
                     const arma::mat& f, const arma::mat& mu){
-    arma::uword m = thresholds.n_rows;
-    arma::uword C = thresholds.n_cols - 1;
-    arma::mat thresholds_prime(m, C+1, arma::fill::zeros);
-    for (arma::uword j = 0; j < m; j++)
-    {
-        arma::vec delta = threshold_to_delta(thresholds.row(j).t());
-        arma::vec delta_prime = ess_threshold(delta, f.col(j), y.col(j), mu.col(j));
-        thresholds_prime.row(j) = delta_to_threshold(delta_prime).t();
-    }
+    arma::uword C = thresholds.n_elem - 1;
+    arma::vec thresholds_prime(C+1, arma::fill::zeros);
+    arma::vec delta = threshold_to_delta(thresholds);
+    arma::vec delta_prime = ess_threshold(delta, f, y, mu);
+    thresholds_prime = delta_to_threshold(delta_prime);
     return thresholds_prime;
 }

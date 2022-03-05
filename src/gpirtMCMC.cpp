@@ -7,10 +7,10 @@ Rcpp::List gpirtMCMC(const arma::mat& y, arma::vec theta,
                      const int THIN,
                      const arma::mat& beta_prior_means,
                      const arma::mat& beta_prior_sds,
-                     arma::mat thresholds) {
+                     arma::vec thresholds) {
     arma::uword n = y.n_rows;
     arma::uword m = y.n_cols;
-    arma::uword C = thresholds.n_cols - 1;
+    arma::uword C = thresholds.n_elem - 1;
     int total_iterations = sample_iterations + burn_iterations;
     // Draw initial values of theta, f, and beta
     arma::vec mean_zeros = arma::zeros<arma::vec>(n);
@@ -53,7 +53,7 @@ Rcpp::List gpirtMCMC(const arma::mat& y, arma::vec theta,
     arma::mat theta_draws(int(sample_iterations/THIN), n);
     // arma::cube beta_draws(2, m, sample_iterations);
     arma::cube f_draws(n, m, int(sample_iterations/THIN));
-    arma::cube threshold_draws(C+1, m, int(sample_iterations/THIN));
+    arma::mat threshold_draws(int(sample_iterations/THIN), C+1);
     arma::cube IRFs(N, m, int(sample_iterations/THIN), arma::fill::zeros);
     // Store initial values
     // theta_draws.row(0)  = theta.t();
@@ -118,12 +118,12 @@ Rcpp::List gpirtMCMC(const arma::mat& y, arma::vec theta,
         cholS = arma::chol(S+X*arma::diagmat(square(beta_prior_sds.col(1)))*X.t(), "lower");
         if (iter%THIN ==0){
             // Store draws
-        theta_draws.row(int(iter/THIN)) = theta.t();
-        // beta_draws.slice(iter) = beta;
-        f_draws.slice(int(iter/THIN)) = f;
-        threshold_draws.slice(int(iter/THIN)) = thresholds.t();
-        // Update IRF estimates
-        IRFs.slice(int(iter/THIN)) = f_star;
+            theta_draws.row(int(iter/THIN)) = theta.t();
+            // beta_draws.slice(iter) = beta;
+            f_draws.slice(int(iter/THIN)) = f;
+            threshold_draws.row(int(iter/THIN)) = thresholds.t();
+            // Update IRF estimates
+            IRFs.slice(int(iter/THIN)) = f_star;
         }
         
     }

@@ -62,12 +62,12 @@ arma::vec ess(const arma::vec& f, const arma::vec& y, const arma::mat& cholS,
 // Function to draw f
 
 arma::mat draw_f(const arma::mat& f, const arma::mat& y, const arma::mat& cholS,
-                 const arma::mat& mu, const arma::mat& thresholds) {
+                 const arma::mat& mu, const arma::vec& thresholds) {
     arma::uword n = f.n_rows;
     arma::uword m = f.n_cols;
     arma::mat result(n, m);
     for ( arma::uword j = 0; j < m; ++j) {
-        result.col(j) = ess(f.col(j), y.col(j), cholS, mu.col(j), thresholds.row(j).t());
+        result.col(j) = ess(f.col(j), y.col(j), cholS, mu.col(j), thresholds);
     }
     return result;
 }
