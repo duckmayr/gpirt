@@ -27,13 +27,7 @@ arma::vec draw_theta(const arma::vec& theta_star,
         P = (P - min_p) / (max_p - min_p);
         // Then (sort of) inverse sample
         double u = R::runif(0.0, 1.0);
-        result[i] = theta_star[N];
-        for ( arma::uword k = 0; k < N; ++k ) {
-            if ( P[k] > u ) {
-                result[i] = theta_star[k];
-                break;
-            }
-        }
+        result[i] = theta_star[arma::sum(P<=u)];
     }
     return result;
 }
