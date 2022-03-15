@@ -93,7 +93,7 @@ gpirtMCMC <- function(data, sample_iterations, burn_iterations, THIN=1,
                                         missing = c(0, 7:9, NA)),
                       beta_prior_means = matrix(0, nrow = 2, ncol = ncol(data)),
                       beta_prior_sds = matrix(3, nrow = 2, ncol = ncol(data)),
-                      theta_init = NULL, thresholds = NULL) {
+                      theta_init = NULL, thresholds = NULL, SEED=1) {
     # First we make sure our data are in the proper format:
     if ( !is.null(vote_codes) ){
         data <- as.response_matrix(data, vote_codes)
@@ -122,7 +122,7 @@ gpirtMCMC <- function(data, sample_iterations, burn_iterations, THIN=1,
     # Now we can call the C++ sampler function
     result <- .gpirtMCMC(
         data, theta_init, sample_iterations, burn_iterations, THIN,
-        beta_prior_means, beta_prior_sds, thresholds
+        beta_prior_means, beta_prior_sds, thresholds, SEED
     )
     # And return the result
     return(result)

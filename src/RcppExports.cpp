@@ -11,9 +11,19 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
+// set_seed
+void set_seed(double seed);
+RcppExport SEXP _gpirt_set_seed(SEXP seedSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type seed(seedSEXP);
+    set_seed(seed);
+    return R_NilValue;
+END_RCPP
+}
 // gpirtMCMC
-Rcpp::List gpirtMCMC(const arma::mat& y, arma::vec theta, const int sample_iterations, const int burn_iterations, const int THIN, const arma::mat& beta_prior_means, const arma::mat& beta_prior_sds, arma::vec thresholds);
-RcppExport SEXP _gpirt_gpirtMCMC(SEXP ySEXP, SEXP thetaSEXP, SEXP sample_iterationsSEXP, SEXP burn_iterationsSEXP, SEXP THINSEXP, SEXP beta_prior_meansSEXP, SEXP beta_prior_sdsSEXP, SEXP thresholdsSEXP) {
+Rcpp::List gpirtMCMC(const arma::mat& y, arma::vec theta, const int sample_iterations, const int burn_iterations, const int THIN, const arma::mat& beta_prior_means, const arma::mat& beta_prior_sds, arma::vec thresholds, const int SEED);
+RcppExport SEXP _gpirt_gpirtMCMC(SEXP ySEXP, SEXP thetaSEXP, SEXP sample_iterationsSEXP, SEXP burn_iterationsSEXP, SEXP THINSEXP, SEXP beta_prior_meansSEXP, SEXP beta_prior_sdsSEXP, SEXP thresholdsSEXP, SEXP SEEDSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -25,13 +35,15 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const arma::mat& >::type beta_prior_means(beta_prior_meansSEXP);
     Rcpp::traits::input_parameter< const arma::mat& >::type beta_prior_sds(beta_prior_sdsSEXP);
     Rcpp::traits::input_parameter< arma::vec >::type thresholds(thresholdsSEXP);
-    rcpp_result_gen = Rcpp::wrap(gpirtMCMC(y, theta, sample_iterations, burn_iterations, THIN, beta_prior_means, beta_prior_sds, thresholds));
+    Rcpp::traits::input_parameter< const int >::type SEED(SEEDSEXP);
+    rcpp_result_gen = Rcpp::wrap(gpirtMCMC(y, theta, sample_iterations, burn_iterations, THIN, beta_prior_means, beta_prior_sds, thresholds, SEED));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_gpirt_gpirtMCMC", (DL_FUNC) &_gpirt_gpirtMCMC, 8},
+    {"_gpirt_set_seed", (DL_FUNC) &_gpirt_set_seed, 1},
+    {"_gpirt_gpirtMCMC", (DL_FUNC) &_gpirt_gpirtMCMC, 9},
     {NULL, NULL, 0}
 };
 

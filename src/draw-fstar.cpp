@@ -25,6 +25,7 @@ arma::mat draw_fstar(const arma::mat& f, const arma::vec& theta,
         draw_mean = kstarT * alpha + mu_star.col(j);
         for ( arma::uword i = 0; i < N; ++i ) {
             result(i, j) = R::rnorm(draw_mean[i], s[i]);
+            result(i, j) = draw_mean[i];
         }
     }
     return result;

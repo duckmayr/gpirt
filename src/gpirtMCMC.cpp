@@ -1,13 +1,22 @@
 #include "gpirt.h"
 #include "mvnormal.h"
 
+// set seed
+// [[Rcpp::export]]
+void set_seed(double seed) {
+    Rcpp::Environment base_env("package:base");
+    Rcpp::Function set_seed_r = base_env["set.seed"];
+    set_seed_r(std::floor(std::fabs(seed)));
+}
+
 // [[Rcpp::export(.gpirtMCMC)]]
 Rcpp::List gpirtMCMC(const arma::mat& y, arma::vec theta,
                      const int sample_iterations, const int burn_iterations, 
                      const int THIN,
                      const arma::mat& beta_prior_means,
                      const arma::mat& beta_prior_sds,
-                     arma::vec thresholds) {
+                     arma::vec thresholds, const int SEED) {
+    set_seed(SEED);
     arma::uword n = y.n_rows;
     arma::uword m = y.n_cols;
     arma::uword C = thresholds.n_elem - 1;
@@ -25,6 +34,7 @@ Rcpp::List gpirtMCMC(const arma::mat& y, arma::vec theta,
         cholS = arma::chol(S+X*arma::diagmat(square(beta_prior_sds.col(j)))*X.t(), "lower");
         f.col(j) = rmvnorm(cholS);
     }
+   
     // We need to have a matrix with a column of ones and a column of theta
     // for generating the linear mean
     

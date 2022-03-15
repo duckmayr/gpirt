@@ -22,9 +22,7 @@ arma::vec draw_theta(const arma::vec& theta_star,
         // Exponeniate, cumsum, then scale to [0, 1] for the "CDF"
         P = arma::exp(P);
         P = arma::cumsum(P);
-        double max_p = P.max();
-        double min_p = P.min();
-        P = (P - min_p) / (max_p - min_p);
+        P = (P - P.min()) / (P.max() - P.min());
         // Then (sort of) inverse sample
         double u = R::runif(0.0, 1.0);
         result[i] = theta_star[arma::sum(P<=u)];
