@@ -94,6 +94,7 @@ gpirtMCMC <- function(data, sample_iterations, burn_iterations, THIN=1,
                       beta_prior_means = matrix(0, nrow = 2, ncol = ncol(data)),
                       beta_prior_sds = matrix(3, nrow = 2, ncol = ncol(data)),
                       theta_init = NULL, thresholds = NULL, SEED=1) {
+    set.seed(SEED);
     # First we make sure our data are in the proper format:
     if ( !is.null(vote_codes) ){
         data <- as.response_matrix(data, vote_codes)
