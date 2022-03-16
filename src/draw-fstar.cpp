@@ -1,4 +1,5 @@
 #include "gpirt.h"
+#include "mvnormal.h"
 
 inline arma::mat double_solve(const arma::mat& L, const arma::mat& X) {
     using arma::trimatl;
@@ -17,16 +18,15 @@ arma::mat draw_fstar(const arma::mat& f, const arma::vec& theta,
     arma::mat kstar  = K(theta, theta_star);
     arma::mat kstarT = kstar.t();
     arma::mat tmp = arma::solve(arma::trimatl(L), kstar);
-    arma::vec s = 1.0 - arma::trans(arma::sqrt(arma::sum(tmp % tmp, 0)));
+    arma::mat K_post = K(theta_star, theta_star) - tmp.t() * tmp;
+    K_post.diag() += 1e-6;
+    arma::mat L_post = arma::chol(K_post, "lower");
     arma::vec alpha(n);
     arma::vec draw_mean(N);
     for ( arma::uword j = 0; j < m; ++j ) {
         alpha = double_solve(L, f.col(j));
         draw_mean = kstarT * alpha + mu_star.col(j);
-        for ( arma::uword i = 0; i < N; ++i ) {
-            result(i, j) = R::rnorm(draw_mean[i], s[i]);
-            result(i, j) = draw_mean[i];
-        }
+        result.col(j) = draw_mean + rmvnorm(L_post);
     }
     return result;
 }
