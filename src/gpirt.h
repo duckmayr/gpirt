@@ -1,18 +1,18 @@
 #include <RcppArmadillo.h>
 
 // Function to draw f
-arma::mat draw_f(const arma::mat& f, const arma::mat& y, const arma::mat& cholS,
-                 const arma::mat& mu, const arma::vec& thresholds);
+arma::cube draw_f(const arma::cube& f, const arma::cube& y, const arma::cube& cholS,
+                 const arma::cube& mu, const arma::vec& thresholds);
 
 // Function to draw fstar
-arma::mat draw_fstar(const arma::mat& f, const arma::vec& theta,
-                     const arma::vec& theta_star, const arma::mat& L,
+arma::cube draw_fstar(const arma::cube& f, const arma::mat& theta,
+                     const arma::vec& theta_star, const arma::cube& L,
                      const arma::mat& mu_star);
 
 // Function to draw theta
-arma::vec draw_theta(const arma::vec& theta_star,
-                     const arma::mat& y, const arma::vec& theta_prior,
-                     const arma::mat& fstar, const arma::mat& mu_star,
+arma::mat draw_theta(const arma::vec& theta_star,
+                     const arma::cube& y, const arma::vec& theta_prior,
+                     const arma::cube& fstar, const arma::mat& mu_star,
                      const arma::vec& thresholds);
 
 // Function to draw beta
@@ -22,11 +22,13 @@ arma::mat draw_beta(const arma::mat& beta, const arma::mat& X,
                     const arma::mat& proposal_sds, const arma::vec& thresholds);
 
 // Function to draw thresholds
-arma::vec draw_threshold(const arma::vec& thresholds, const arma::mat& y,
-                    const arma::mat& f, const arma::mat& mu);
+arma::vec draw_threshold(const arma::vec& thresholds, const arma::cube& y,
+                    const arma::cube& f, const arma::cube& mu);
 
 // Covariance function
 arma::mat K(const arma::vec& x1, const arma::vec& x2);
+arma::mat K_time(const arma::vec& x1, const arma::vec& x2,
+                 const double& os, const double& ls);
 
 // Likelihood function
 // double ll(const arma::vec& f, const arma::vec& y);

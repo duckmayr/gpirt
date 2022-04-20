@@ -99,4 +99,3 @@ test_that("as.response_matrix functions properly", {
                      result1)
 })
 
-

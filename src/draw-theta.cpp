@@ -1,31 +1,54 @@
 #include "gpirt.h"
 
-arma::vec draw_theta(const arma::vec& theta_star,
-                     const arma::mat& y, const arma::vec& theta_prior,
-                     const arma::mat& fstar, const arma::mat& mu_star,
+arma::mat draw_theta(const arma::vec& theta_star,
+                     const arma::cube& y, const arma::vec& theta_prior,
+                     const arma::cube& fstar, const arma::mat& mu_star,
                      const arma::vec& thresholds) {
     arma::uword n = y.n_rows;
     arma::uword m = y.n_cols;
+    arma::uword horizon = y.n_slices;
     arma::uword N = theta_star.n_elem;
-    arma::vec result(n);
+    arma::mat result(n, horizon);
     arma::vec responses(m);
     arma::vec P(N);
     for ( arma::uword i = 0; i < n; ++i ) {
         // For each respondent, extract their responses
-        responses = y.row(i).t();
-        for ( arma::uword k = 0; k < N; ++k ) {
-            // Then for each value in theta_star,
-            // get the log prior + the log likelihood
-            P[k] = theta_prior[k] + ll_bar(fstar.row(k).t(),
-                     responses, mu_star.row(k).t(), thresholds);
+        for ( arma::uword h = 0; h < horizon; ++h ){
+            responses = y.slice(h).row(i).t();
+            arma::vec theta_post(N, arma::fill::zeros);
+            if(h>0){
+                double os = 1.0;
+                double ls = 1 + horizon / 2.0;
+                arma::vec theta_prev = result.row(i).subvec(0,h-1).t();
+                arma::vec t_prev = arma::linspace<arma::vec>(0, h-1, h);
+                arma::mat K_prev = K_time(arma::vec(1, 
+                            arma::fill::value(h)),t_prev, os, ls);
+                arma::mat V = K_time(t_prev, t_prev, os, ls);
+                double product = arma::dot(K_prev.row(0).t(), 
+                        arma::inv(V)*theta_prev);
+                arma::vec diff = theta_star - product;
+                double v = os * os - arma::dot(K_prev.row(0),
+                            arma::inv(V)*K_prev.row(0).t());
+                theta_post = (-0.5)  * diff % diff / v;
+            }
+            else{
+                theta_post = theta_prior;
+            }
+            
+            for ( arma::uword k = 0; k < N; ++k ) {
+                // Then for each value in theta_star,
+                // get the log prior + the log likelihood + log posterior
+                P[k] = theta_post[k] + ll_bar(fstar.slice(h).row(k).t(), 
+                            responses, mu_star.row(k).t(), thresholds);
+            }
+            // Exponeniate, cumsum, then scale to [0, 1] for the "CDF"
+            P = arma::exp(P);
+            P = arma::cumsum(P);
+            P = (P - P.min()) / (P.max() - P.min());
+            // Then (sort of) inverse sample
+            double u = R::runif(0.0, 1.0);
+            result(i, h) = theta_star[arma::sum(P<=u)];
         }
-        // Exponeniate, cumsum, then scale to [0, 1] for the "CDF"
-        P = arma::exp(P);
-        P = arma::cumsum(P);
-        P = (P - P.min()) / (P.max() - P.min());
-        // Then (sort of) inverse sample
-        double u = R::runif(0.0, 1.0);
-        result[i] = theta_star[arma::sum(P<=u)];
     }
     return result;
 }

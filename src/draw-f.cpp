@@ -61,13 +61,27 @@ arma::vec ess(const arma::vec& f, const arma::vec& y, const arma::mat& cholS,
 
 // Function to draw f
 
-arma::mat draw_f(const arma::mat& f, const arma::mat& y, const arma::mat& cholS,
+inline arma::mat draw_f_(const arma::mat& f, const arma::mat& y, const arma::mat& cholS,
                  const arma::mat& mu, const arma::vec& thresholds) {
+    // draw f for one horizon
     arma::uword n = f.n_rows;
     arma::uword m = f.n_cols;
     arma::mat result(n, m);
     for ( arma::uword j = 0; j < m; ++j) {
         result.col(j) = ess(f.col(j), y.col(j), cholS, mu.col(j), thresholds);
+    }
+    return result;
+}
+
+arma::cube draw_f(const arma::cube& f, const arma::cube& y, const arma::cube& cholS,
+                 const arma::cube& mu, const arma::vec& thresholds) {
+    arma::uword n = f.n_rows;
+    arma::uword m = f.n_cols;
+    arma::uword horizon = f.n_slices;
+    arma::cube result(n, m, horizon);
+    for ( arma::uword h = 0; h < horizon; ++h){
+        result.slice(h) = draw_f_(f.slice(h), y.slice(h), cholS.slice(h),\
+                        mu.slice(h), thresholds);
     }
     return result;
 }

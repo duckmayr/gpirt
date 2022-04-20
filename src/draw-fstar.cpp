@@ -8,9 +8,10 @@ inline arma::mat double_solve(const arma::mat& L, const arma::mat& X) {
     return solve(trimatu(L.t()), solve(trimatl(L), X));
 }
 
-arma::mat draw_fstar(const arma::mat& f, const arma::vec& theta,
+inline arma::mat draw_fstar_(const arma::mat& f, const arma::vec& theta,
                      const arma::vec& theta_star, const arma::mat& L,
                      const arma::mat& mu_star) {
+    // draw fstar for one horizon
     arma::uword n = f.n_rows;
     arma::uword m = f.n_cols;
     arma::uword N = theta_star.n_elem;
@@ -29,4 +30,20 @@ arma::mat draw_fstar(const arma::mat& f, const arma::vec& theta,
         result.col(j) = draw_mean + rmvnorm(L_post);
     }
     return result;
+}
+
+arma::cube draw_fstar(const arma::cube& f, const arma::mat& theta,
+                     const arma::vec& theta_star, const arma::cube& L,
+                     const arma::mat& mu_star) {
+    arma::uword horizon = f.n_slices;
+    arma::uword m = f.n_cols;
+    arma::uword N = theta_star.n_elem;
+    arma::cube results(N, m, horizon);
+
+    for ( arma::uword h = 0; h < horizon; ++h ){
+        results.slice(h) = draw_fstar_(f.slice(h), theta.col(h), \
+                                theta_star, L.slice(h), mu_star);
+    }
+
+    return results;
 }

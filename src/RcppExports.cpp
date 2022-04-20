@@ -22,13 +22,13 @@ BEGIN_RCPP
 END_RCPP
 }
 // gpirtMCMC
-Rcpp::List gpirtMCMC(const arma::mat& y, arma::vec theta, const int sample_iterations, const int burn_iterations, const int THIN, const arma::mat& beta_prior_means, const arma::mat& beta_prior_sds, arma::vec thresholds, const int SEED);
+Rcpp::List gpirtMCMC(const arma::cube& y, arma::mat theta, const int sample_iterations, const int burn_iterations, const int THIN, const arma::mat& beta_prior_means, const arma::mat& beta_prior_sds, arma::vec thresholds, const int SEED);
 RcppExport SEXP _gpirt_gpirtMCMC(SEXP ySEXP, SEXP thetaSEXP, SEXP sample_iterationsSEXP, SEXP burn_iterationsSEXP, SEXP THINSEXP, SEXP beta_prior_meansSEXP, SEXP beta_prior_sdsSEXP, SEXP thresholdsSEXP, SEXP SEEDSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::mat& >::type y(ySEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type theta(thetaSEXP);
+    Rcpp::traits::input_parameter< const arma::cube& >::type y(ySEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type theta(thetaSEXP);
     Rcpp::traits::input_parameter< const int >::type sample_iterations(sample_iterationsSEXP);
     Rcpp::traits::input_parameter< const int >::type burn_iterations(burn_iterationsSEXP);
     Rcpp::traits::input_parameter< const int >::type THIN(THINSEXP);

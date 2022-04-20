@@ -102,17 +102,27 @@ gpirtMCMC <- function(data, sample_iterations, burn_iterations, THIN=1,
     
     # Now we make sure we have initial values for theta
     if ( is.null(theta_init) ) {
-        theta_init  <- rnorm(nrow(data))
+        # initial theta as # of respondents by # of sessions
+        theta_init <- matrix(0, nrow=nrow(data), ncol=dim(data)[3])
+        theta_init[,1] <- rnorm(nrow(data))
+        if(dim(data)[3]>=2){
+            for(h in 2:dim(data)[3]){
+                    theta_init[,h] <- theta_init[,1]
+            }
+        }
     }
+
     # Now we make sure we have initial values for thresholds
     if ( is.null(thresholds) ) {
         if(is.matrix(data)){
             unique_ys = unique(data)
         }else{
-            unique_ys = unique(unlist(data))
+            n = dim(data)[1]
+            m = dim(data)[2]
+            horizon = dim(data)[3]
+            unique_ys = unique(array(data, n*m*horizon))
         }   
         C = length(unique(unique_ys[!is.na(unique_ys)]))
-        m = ncol(data)
         thresholds <- rep(0, C+1)
         thresholds[1] <- -Inf
         for(i in 1:(C-1)){
