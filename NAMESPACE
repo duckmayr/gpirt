@@ -3,6 +3,7 @@
 export(as.response_matrix)
 export(gpirtMCMC)
 export(is.response_matrix)
+export(recover_fstar)
 export(response_matrix)
 importFrom(Rcpp,sourceCpp)
 importFrom(stats,na.omit)

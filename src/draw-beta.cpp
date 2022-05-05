@@ -27,7 +27,7 @@ arma::mat draw_beta(const arma::mat& beta, const arma::mat& X,
             double pv_ll      = ll_bar(rho, responses, X * pv, thresholds);
             double cv_ll      = ll_bar(rho, responses, X * cv, thresholds);
             double r          = pv_prior + pv_ll - cv_prior - cv_ll;
-            if ( std::log(R::runif(0.0, 1.0)) < r ) {
+            if ( std::log(arma::randu(1)) < r ) {
                 cv[k] = pv[k];
             }
             else {

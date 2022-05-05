@@ -46,7 +46,8 @@ arma::mat draw_theta(const arma::vec& theta_star,
             P = arma::cumsum(P);
             P = (P - P.min()) / (P.max() - P.min());
             // Then (sort of) inverse sample
-            double u = R::runif(0.0, 1.0);
+            // double u = R::runif(0.0, 1.0);
+            double u = arma::randu(1);
             result(i, h) = theta_star[arma::sum(P<=u)];
         }
     }

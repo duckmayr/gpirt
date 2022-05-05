@@ -21,7 +21,7 @@ Description: Provides an MCMC sampler and related tools for a Gaussian Process
 License: GPL (>= 2.0)
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2
 Depends:
     R (>= 3.4.0)
 LinkingTo: 

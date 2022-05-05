@@ -1,5 +1,10 @@
 #include <RcppArmadillo.h>
 
+// Function to set seed state
+void set_seed_state(Rcpp::NumericVector seed_state);
+void set_seed(double seed);
+Rcpp::NumericVector get_seed_state();
+
 // Function to draw f
 arma::cube draw_f(const arma::cube& f, const arma::cube& y, const arma::cube& cholS,
                  const arma::cube& mu, const arma::vec& thresholds);

@@ -11,16 +11,6 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
-// set_seed
-void set_seed(double seed);
-RcppExport SEXP _gpirt_set_seed(SEXP seedSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< double >::type seed(seedSEXP);
-    set_seed(seed);
-    return R_NilValue;
-END_RCPP
-}
 // gpirtMCMC
 Rcpp::List gpirtMCMC(const arma::cube& y, arma::mat theta, const int sample_iterations, const int burn_iterations, const int THIN, const arma::mat& beta_prior_means, const arma::mat& beta_prior_sds, arma::vec thresholds, const int SEED);
 RcppExport SEXP _gpirt_gpirtMCMC(SEXP ySEXP, SEXP thetaSEXP, SEXP sample_iterationsSEXP, SEXP burn_iterationsSEXP, SEXP THINSEXP, SEXP beta_prior_meansSEXP, SEXP beta_prior_sdsSEXP, SEXP thresholdsSEXP, SEXP SEEDSEXP) {
@@ -40,10 +30,27 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// recover_fstar
+Rcpp::List recover_fstar(NumericVector seed_state, arma::cube f, const arma::cube& y, const arma::mat& theta, const arma::vec& thresholds, const arma::mat& beta_prior_means, const arma::mat& beta_prior_sds);
+RcppExport SEXP _gpirt_recover_fstar(SEXP seed_stateSEXP, SEXP fSEXP, SEXP ySEXP, SEXP thetaSEXP, SEXP thresholdsSEXP, SEXP beta_prior_meansSEXP, SEXP beta_prior_sdsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type seed_state(seed_stateSEXP);
+    Rcpp::traits::input_parameter< arma::cube >::type f(fSEXP);
+    Rcpp::traits::input_parameter< const arma::cube& >::type y(ySEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type theta(thetaSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type thresholds(thresholdsSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type beta_prior_means(beta_prior_meansSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type beta_prior_sds(beta_prior_sdsSEXP);
+    rcpp_result_gen = Rcpp::wrap(recover_fstar(seed_state, f, y, theta, thresholds, beta_prior_means, beta_prior_sds));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_gpirt_set_seed", (DL_FUNC) &_gpirt_set_seed, 1},
     {"_gpirt_gpirtMCMC", (DL_FUNC) &_gpirt_gpirtMCMC, 9},
+    {"_gpirt_recover_fstar", (DL_FUNC) &_gpirt_recover_fstar, 7},
     {NULL, NULL, 0}
 };
 
