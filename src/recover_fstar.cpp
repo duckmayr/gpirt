@@ -5,7 +5,7 @@
 using namespace Rcpp;
 
 // [[Rcpp::export(.recover_fstar)]]
-Rcpp::List recover_fstar(NumericVector seed_state, 
+Rcpp::List recover_fstar(int seed, 
                          arma::cube f,
                          const arma::cube& y,
                          const arma::mat& theta,
@@ -52,12 +52,11 @@ Rcpp::List recover_fstar(NumericVector seed_state,
                         X.slice(h).t(), "lower");
         }
     }
-
+  
     // restore seed
-    set_seed_state(seed_state);
+    set_seed(seed);
     f = draw_f(f, y, cholS, mu, thresholds);
     arma::cube f_star = draw_fstar(f, theta, theta_star, cholS, mu_star);
-
     Rcpp::List result = Rcpp::List::create(Rcpp::Named("fstar", f_star));
 
     return result;

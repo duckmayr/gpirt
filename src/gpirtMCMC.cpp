@@ -5,10 +5,10 @@
 using namespace Rcpp;
 
 // set seed
-void set_seed(double seed) {
+void set_seed(int seed) {
     Environment base_env("package:base");
     Function set_seed_r = base_env["set.seed"];
-    set_seed_r(std::floor(std::fabs(seed)));
+    set_seed_r(seed);
 }
 
 NumericVector get_seed_state(){
@@ -19,9 +19,6 @@ NumericVector get_seed_state(){
 void set_seed_state(NumericVector seed_state){
     Rcpp::Environment global_env(".GlobalEnv");
     global_env[".Random.seed"] = seed_state;
-    Environment::Binding v = global_env[".Random.seed"];
-    NumericVector state = v;
-    Rcpp::Rcout << state << "\n";
 }
 
 // [[Rcpp::export(.gpirtMCMC)]]
@@ -30,9 +27,9 @@ Rcpp::List gpirtMCMC(const arma::cube& y, arma::mat theta,
                      const int THIN,
                      const arma::mat& beta_prior_means,
                      const arma::mat& beta_prior_sds,
-                     arma::vec thresholds, const int SEED) {
-    // set_seed(SEED);
-    arma::arma_rng::set_seed(SEED);
+                     const double& theta_os,
+                     const double& theta_ls,
+                     arma::vec thresholds) {
     arma::uword n = y.n_rows;
     arma::uword m = y.n_cols;
     arma::uword horizon = y.n_slices;
@@ -87,75 +84,47 @@ Rcpp::List gpirtMCMC(const arma::cube& y, arma::mat theta,
     arma::cube theta_draws(1+int(sample_iterations/THIN), n, horizon);
     arma::field<arma::cube> f_draws(1+int(sample_iterations/THIN));
     arma::mat threshold_draws(1+int(sample_iterations/THIN), C + 1);
-    arma::field<arma::cube> IRFs(int(sample_iterations/THIN));
-    arma::mat seed_states(int(sample_iterations/THIN), get_seed_state().length());
+    // arma::field<arma::cube> IRFs(1+int(sample_iterations/THIN));
     // Information for progress bar:
     double progress_increment = (1.0 / total_iterations) * 100.0;
     double progress = 0.0;
-    // Start burn-in loop
-    for ( int iter = 0; iter < burn_iterations; ++iter ) {
-        // Update progress and check for user interrupt (normally you'd do this
-        // and the interrupt check less often, but -- at least for now -- each
-        // iteration takes long enough to warrant doing it each time)
-        Rprintf("\r%6.3f %% complete", progress);
-        progress += progress_increment;
-        Rcpp::checkUserInterrupt();
-        // Draw new parameter values
-        for (arma::uword h = 0; h < horizon; h++){
-            cholS.slice(h) = arma::chol(S.slice(h)+\
-                    X.slice(h)*arma::diagmat(square(beta_prior_sds.col(1)))*\
-                    X.slice(h).t(), "lower");
-        }
-        f = draw_f(f, y, cholS, mu, thresholds);
-        f_star = draw_fstar(f, theta, theta_star, cholS, mu_star);
-        theta = draw_theta(theta_star, y, theta_prior, f_star, mu_star, thresholds);
-        X.col(1) = theta;
-        // Update f for new theta
-        arma::mat idx = (theta+5)/0.01;
-        for (arma::uword k = 0; k < n; ++k){
-            for (arma::uword h = 0; h < horizon; ++h){
-                f.slice(h).row(k) = f_star.slice(h).row(int(idx(k, h)));
-            }
-        }
-        for (arma::uword h = 0; h < horizon; h++){
-            mu.slice(h) = X.slice(h) * beta_prior_means;
-        }
-        thresholds = draw_threshold(thresholds, y, f, mu);
-        for (arma::uword h = 0; h < horizon; h++)
-        {
-            S.slice(h) = K(theta.col(h), theta.col(h));
-            S.slice(h).diag() += 1e-6;
-        }
-    }
-
+  
     // store initial values
-    theta_draws.row(0) = theta;
-    f_draws[0] = f;
-    threshold_draws.row(0) = thresholds.t();
+    // theta_draws.row(0) = theta;
+    // f_draws[0] = f;
+    // threshold_draws.row(0) = thresholds.t();
 
     // Start sampling loop
-    for ( int iter = 0; iter < sample_iterations; ++iter ) {
+    for ( int iter = 0; iter < total_iterations; ++iter ) {
         // Update progress and check for user interrupt
         Rprintf("\r%6.3f %% complete", progress);
         progress += progress_increment;
         Rcpp::checkUserInterrupt();
-        // Draw new parameter values
+       
+        // set up S, mu, cholS from theta
         for (arma::uword h = 0; h < horizon; h++)
         {
             S.slice(h) = K(theta.col(h), theta.col(h));
             S.slice(h).diag() += 1e-6;
+        }
+        X.col(1) = theta;
+        for (arma::uword h = 0; h < horizon; h++){
+            mu.slice(h) = X.slice(h) * beta_prior_means;
         }
         for (arma::uword h = 0; h < horizon; h++){
             cholS.slice(h) = arma::chol(S.slice(h)+\
                     X.slice(h)*arma::diagmat(square(beta_prior_sds.col(1)))*\
                     X.slice(h).t(), "lower");
         }
-        // store seed states for recovering fstar
-        seed_states.row(int(iter/THIN)) = arma::vec(get_seed_state()).t();
+        // set seed
+        set_seed(iter);
+
+        // Draw new parameter values
         f = draw_f(f, y, cholS, mu, thresholds);
         f_star = draw_fstar(f, theta, theta_star, cholS, mu_star);
-        theta = draw_theta(theta_star, y, theta_prior, f_star, mu_star, thresholds);
-        X.col(1) = theta;
+        
+        theta = draw_theta(theta_star, y, theta_prior, f_star,
+             mu_star, thresholds, theta_os, theta_ls);
         // Update f for new theta
         arma::mat idx = (theta+5)/0.01;
         for (arma::uword k = 0; k < n; ++k){
@@ -163,16 +132,14 @@ Rcpp::List gpirtMCMC(const arma::cube& y, arma::mat theta,
                 f.slice(h).row(k) = f_star.slice(h).row(int(idx(k, h)));
             }
         }
-        for (arma::uword h = 0; h < horizon; h++){
-            mu.slice(h) = X.slice(h) * beta_prior_means;
-        }
         thresholds = draw_threshold(thresholds, y, f, mu);
-        if (iter%THIN == 0){
+        if (iter>=(burn_iterations-1) && iter%THIN == 0){
             // Store draws
-            theta_draws.row(1+int(iter/THIN)) = theta;
-            f_draws[1+int(iter/THIN)] = f;
-            threshold_draws.row(1+int(iter/THIN)) = thresholds.t();
-            IRFs[int(iter/THIN)] = f_star;
+            int store_idx = int((iter+1-burn_iterations)/THIN);
+            theta_draws.row(store_idx) = theta;
+            f_draws[store_idx] = f;
+            threshold_draws.row(store_idx) = thresholds.t();
+            // IRFs[store_idx] = f_star;
         }
     }
     Rprintf("\r100.000 %% complete\n");
@@ -185,8 +152,6 @@ Rcpp::List gpirtMCMC(const arma::cube& y, arma::mat theta,
     Rcpp::List result = Rcpp::List::create(Rcpp::Named("theta", theta_draws),
                                            // Rcpp::Named("beta", beta_draws),
                                            Rcpp::Named("f", f_draws),
-                                           Rcpp::Named("threshold", threshold_draws),
-                                           Rcpp::Named("IRFs", IRFs),
-                                           Rcpp::Named("states", seed_states));
+                                           Rcpp::Named("threshold", threshold_draws));
     return result;
 }

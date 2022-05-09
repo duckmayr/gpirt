@@ -28,8 +28,8 @@
 #'
 #' @export 
 recover_fstar <- function(seed_state, f, y, theta, thresholds,
-                      beta_prior_means = matrix(0, nrow = 2, ncol = ncol(f)),
-                      beta_prior_sds = matrix(3, nrow = 2, ncol = ncol(f))) {
+                      beta_prior_means = matrix(0, nrow = 2, ncol = ncol(y)),
+                      beta_prior_sds = matrix(0.5, nrow = 2, ncol = ncol(y))) {
     # Now we can call the C++ function
     result <- .recover_fstar(
             seed_state, f, y, theta, thresholds, beta_prior_means, beta_prior_sds

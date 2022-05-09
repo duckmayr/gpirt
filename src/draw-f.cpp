@@ -25,16 +25,15 @@ arma::vec ess(const arma::vec& f, const arma::vec& y, const arma::mat& cholS,
     // normal with mean zero and covariance Sigma.
     arma::vec nu = rmvnorm(cholS);
     // Then we calculate the log likelihood threshold for acceptance, "log_y"
-    // double u = R::runif(0.0, 1.0);
-    double u = arma::randu(1);
+    double u = R::runif(0.0, 1.0);
+    // double u = arma::randu(1);
     double log_y = ll_bar(f, y, mu, thresholds) + std::log(u);
     // For our while loop condition:
     bool reject = true;
     // Set up the proposal band and draw initial proposal epsilon:
     double epsilon_min = 0.0;
     double epsilon_max = M_2PI;
-    // double epsilon = R::runif(epsilon_min, epsilon_max);
-    double epsilon = (epsilon_max-epsilon_min)*arma::randu(1) + epsilon_min;
+    double epsilon = R::runif(epsilon_min, epsilon_max);
     epsilon_min = epsilon - M_2PI;
     // We'll create the arma::vec object for f_prime out of the loop
     arma::vec f_prime(n);
@@ -55,8 +54,7 @@ arma::vec ess(const arma::vec& f, const arma::vec& y, const arma::mat& cholS,
             else {
                 epsilon_max = epsilon;
             }
-            // epsilon = R::runif(epsilon_min, epsilon_max);
-            epsilon = (epsilon_max-epsilon_min)*arma::randu(1) + epsilon_min;
+            epsilon = R::runif(epsilon_min, epsilon_max);
         }
     }
     return f_prime;

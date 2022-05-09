@@ -2,7 +2,7 @@
 
 // Function to set seed state
 void set_seed_state(Rcpp::NumericVector seed_state);
-void set_seed(double seed);
+void set_seed(int seed);
 Rcpp::NumericVector get_seed_state();
 
 // Function to draw f
@@ -18,7 +18,9 @@ arma::cube draw_fstar(const arma::cube& f, const arma::mat& theta,
 arma::mat draw_theta(const arma::vec& theta_star,
                      const arma::cube& y, const arma::vec& theta_prior,
                      const arma::cube& fstar, const arma::mat& mu_star,
-                     const arma::vec& thresholds);
+                     const arma::vec& thresholds,
+                     const double& os,
+                     const double& ls);
 
 // Function to draw beta
 arma::mat draw_beta(const arma::mat& beta, const arma::mat& X,

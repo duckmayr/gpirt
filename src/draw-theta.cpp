@@ -3,7 +3,9 @@
 arma::mat draw_theta(const arma::vec& theta_star,
                      const arma::cube& y, const arma::vec& theta_prior,
                      const arma::cube& fstar, const arma::mat& mu_star,
-                     const arma::vec& thresholds) {
+                     const arma::vec& thresholds,
+                     const double& os,
+                     const double& ls) {
     arma::uword n = y.n_rows;
     arma::uword m = y.n_cols;
     arma::uword horizon = y.n_slices;
@@ -16,9 +18,9 @@ arma::mat draw_theta(const arma::vec& theta_star,
         for ( arma::uword h = 0; h < horizon; ++h ){
             responses = y.slice(h).row(i).t();
             arma::vec theta_post(N, arma::fill::zeros);
-            if(h>0){
-                double os = 1.0;
-                double ls = 1 + horizon / 2.0;
+            if(h>0 && os>0){
+                // double os = 1.0;
+                // double ls = 1 + horizon / 2.0;
                 arma::vec theta_prev = result.row(i).subvec(0,h-1).t();
                 arma::vec t_prev = arma::linspace<arma::vec>(0, h-1, h);
                 arma::mat K_prev = K_time(arma::vec(1, 
@@ -46,8 +48,7 @@ arma::mat draw_theta(const arma::vec& theta_star,
             P = arma::cumsum(P);
             P = (P - P.min()) / (P.max() - P.min());
             // Then (sort of) inverse sample
-            // double u = R::runif(0.0, 1.0);
-            double u = arma::randu(1);
+            double u = R::runif(0.0, 1.0);
             result(i, h) = theta_star[arma::sum(P<=u)];
         }
     }

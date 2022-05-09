@@ -30,7 +30,7 @@ arma::vec ess_threshold(const arma::vec& delta, const arma::cube& f,
     arma::mat cholS = arma::chol(S, "lower");
     arma::vec nu = rmvnorm(cholS);
     // Then we calculate the log likelihood threshold for acceptance, "log_y"
-    double u = arma::randu(1);
+    double u = R::runif(0.0,1.0);
     double log_y = std::log(u);
     arma::vec thresholds = delta_to_threshold(delta);
     for (arma::uword h = 0; h < horizon; h++)
@@ -46,8 +46,8 @@ arma::vec ess_threshold(const arma::vec& delta, const arma::cube& f,
     // Set up the proposal band and draw initial proposal epsilon:
     double epsilon_min = 0.0;
     double epsilon_max = M_2PI;
-    // double epsilon = R::runif(epsilon_min, epsilon_max);
-    double epsilon = (epsilon_max-epsilon_min)*arma::randu(1) + epsilon_min;
+    double epsilon = R::runif(epsilon_min, epsilon_max);
+    // double epsilon = (epsilon_max-epsilon_min)*arma::randu(1) + epsilon_min;
     epsilon_min = epsilon - M_2PI;
     // We'll create the arma::vec object for delta_prime out of the loop
     arma::vec delta_prime(C-1, arma::fill::zeros);
@@ -78,8 +78,7 @@ arma::vec ess_threshold(const arma::vec& delta, const arma::cube& f,
             else {
                 epsilon_max = epsilon;
             }
-            // epsilon = R::runif(epsilon_min, epsilon_max);
-            epsilon = (epsilon_max-epsilon_min)*arma::randu(1) + epsilon_min;
+            epsilon = R::runif(epsilon_min, epsilon_max);
         }
     }
     return delta_prime;
