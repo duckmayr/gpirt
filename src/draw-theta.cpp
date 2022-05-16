@@ -34,22 +34,45 @@ arma::mat draw_theta(const arma::vec& theta_star,
                 theta_post = (-0.5)  * diff % diff / v;
             }
             else{
+                // RDM: independent theta
                 theta_post = theta_prior;
             }
             
-            for ( arma::uword k = 0; k < N; ++k ) {
-                // Then for each value in theta_star,
-                // get the log prior + the log likelihood + log posterior
-                P[k] = theta_post[k] + ll_bar(fstar.slice(h).row(k).t(), 
-                            responses, mu_star.row(k).t(), thresholds);
+            if(h>0 && ls<0){
+                // CST: constant theta across horizon
+                // no need to sample for later horizons
+                result(i, h) = result(i, 0);
             }
-            // Exponeniate, cumsum, then scale to [0, 1] for the "CDF"
-            P = arma::exp(P);
-            P = arma::cumsum(P);
-            P = (P - P.min()) / (P.max() - P.min());
-            // Then (sort of) inverse sample
-            double u = R::runif(0.0, 1.0);
-            result(i, h) = theta_star[arma::sum(P<=u)];
+            else if(h==0 && ls<0){
+                // CST: sample first theta based on all horizon data
+                P = theta_post;
+                for ( arma::uword h = 0; h < horizon; ++h ){
+                    for ( arma::uword k = 0; k < N; ++k ) {
+                        P[k] += ll_bar(fstar.slice(h).row(k).t(), 
+                            y.slice(h).row(i).t(), mu_star.row(k).t(), thresholds);
+                    }
+                }
+                P = arma::exp(P);
+                P = arma::cumsum(P);
+                P = (P - P.min()) / (P.max() - P.min());
+                double u = R::runif(0.0, 1.0);
+                result(i, h) = theta_star[arma::sum(P<=u)];
+            }
+            else{
+                for ( arma::uword k = 0; k < N; ++k ) {
+                    // Then for each value in theta_star,
+                    // get the log prior + the log likelihood + log posterior
+                    P[k] = theta_post[k] + ll_bar(fstar.slice(h).row(k).t(), 
+                                responses, mu_star.row(k).t(), thresholds);
+                }
+                // Exponeniate, cumsum, then scale to [0, 1] for the "CDF"
+                P = arma::exp(P);
+                P = arma::cumsum(P);
+                P = (P - P.min()) / (P.max() - P.min());
+                // Then (sort of) inverse sample
+                double u = R::runif(0.0, 1.0);
+                result(i, h) = theta_star[arma::sum(P<=u)];
+            }
         }
     }
     return result;
