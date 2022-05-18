@@ -23,14 +23,11 @@ arma::mat draw_theta(const arma::vec& theta_star,
                 // double ls = 1 + horizon / 2.0;
                 arma::vec theta_prev = result.row(i).subvec(0,h-1).t();
                 arma::vec t_prev = arma::linspace<arma::vec>(0, h-1, h);
-                arma::mat K_prev = K_time(arma::vec(1, 
-                            arma::fill::value(h)),t_prev, os, ls);
-                arma::mat V = K_time(t_prev, t_prev, os, ls);
-                double product = arma::dot(K_prev.row(0).t(), 
-                        arma::inv(V)*theta_prev);
+                arma::mat K_prev = K_time(arma::vec(1, arma::fill::value(h)),t_prev, os, ls);
+                arma::mat V = K_time(t_prev, t_prev, os, ls) + 1e-6*arma::eye(h,h);
+                double product = arma::dot(K_prev.row(0).t(), arma::inv(V)*theta_prev);
                 arma::vec diff = theta_star - product;
-                double v = os * os - arma::dot(K_prev.row(0),
-                            arma::inv(V)*K_prev.row(0).t());
+                double v = os * os - arma::dot(K_prev.row(0).t(), arma::inv(V)*K_prev.row(0).t());
                 theta_post = (-0.5)  * diff % diff / v;
             }
             else{
