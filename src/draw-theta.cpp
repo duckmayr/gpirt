@@ -12,23 +12,24 @@ arma::mat draw_theta(const arma::vec& theta_star,
     arma::uword N = theta_star.n_elem;
     arma::mat result(n, horizon);
     arma::vec responses(m);
-    arma::vec P(N);
+    arma::vec P(N, arma::fill::zeros);
     for ( arma::uword i = 0; i < n; ++i ) {
         // For each respondent, extract their responses
         for ( arma::uword h = 0; h < horizon; ++h ){
             responses = y.slice(h).row(i).t();
             arma::vec theta_post(N, arma::fill::zeros);
             if(h>0 && os>0){
+                // GP: dynamic theta across horizon
                 // double os = 1.0;
-                // double ls = 1 + horizon / 2.0;
+                // double ls = 1 + horizon / 3.0;
                 arma::vec theta_prev = result.row(i).subvec(0,h-1).t();
                 arma::vec t_prev = arma::linspace<arma::vec>(0, h-1, h);
                 arma::mat K_prev = K_time(arma::vec(1, arma::fill::value(h)),t_prev, os, ls);
-                arma::mat V = K_time(t_prev, t_prev, os, ls) + 1e-6*arma::eye(h,h);
+                arma::mat V = K_time(t_prev, t_prev, os, ls) + 1e-2*arma::eye(h,h);
                 double product = arma::dot(K_prev.row(0).t(), arma::inv(V)*theta_prev);
                 arma::vec diff = theta_star - product;
                 double v = os * os - arma::dot(K_prev.row(0).t(), arma::inv(V)*K_prev.row(0).t());
-                theta_post = (-0.5)  * diff % diff / v;
+                theta_post = (-0.5) * diff % diff / v;
             }
             else{
                 // RDM: independent theta
@@ -58,7 +59,7 @@ arma::mat draw_theta(const arma::vec& theta_star,
             else{
                 for ( arma::uword k = 0; k < N; ++k ) {
                     // Then for each value in theta_star,
-                    // get the log prior + the log likelihood + log posterior
+                    // get log likelihood + log posterior
                     P[k] = theta_post[k] + ll_bar(fstar.slice(h).row(k).t(), 
                                 responses, mu_star.row(k).t(), thresholds);
                 }
