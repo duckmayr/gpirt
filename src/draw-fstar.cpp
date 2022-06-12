@@ -1,7 +1,7 @@
 #include "gpirt.h"
 #include "mvnormal.h"
 
-inline arma::mat double_solve(const arma::mat& L, const arma::mat& X) {
+arma::mat double_solve(const arma::mat& L, const arma::mat& X) {
     using arma::trimatl;
     using arma::trimatu;
     using arma::solve;

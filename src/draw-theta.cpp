@@ -25,10 +25,17 @@ arma::mat draw_theta(const arma::vec& theta_star,
                 arma::vec theta_prev = result.row(i).subvec(0,h-1).t();
                 arma::vec t_prev = arma::linspace<arma::vec>(0, h-1, h);
                 arma::mat K_prev = K_time(arma::vec(1, arma::fill::value(h)),t_prev, os, ls);
-                arma::mat V = K_time(t_prev, t_prev, os, ls) + 1e-2*arma::eye(h,h);
-                double product = arma::dot(K_prev.row(0).t(), arma::inv(V)*theta_prev);
+                arma::mat V = K_time(t_prev, t_prev, os, ls);
+                V.diag() += 1e-2;
+                arma::mat L = arma::chol(V, "lower");
+                arma::mat tmp = arma::solve(arma::trimatl(L), K_prev.t());
+                double v = os * os - arma::dot(tmp.t(), tmp);
+                tmp = double_solve(L, theta_prev);
+                // double product = arma::dot(K_prev.row(0).t(), arma::inv(V)*theta_prev);;
+                double product = arma::dot(K_prev.row(0).t(), tmp);
                 arma::vec diff = theta_star - product;
-                double v = os * os - arma::dot(K_prev.row(0).t(), arma::inv(V)*K_prev.row(0).t());
+                // double v = os * os - arma::dot(K_prev.row(0).t(), arma::inv(V)*K_prev.row(0).t());
+                // Rcpp::Rcout << "prod: " << product2 - product << "\n";
                 theta_post = (-0.5) * diff % diff / v;
             }
             else{

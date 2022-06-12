@@ -48,3 +48,6 @@ double ll_bar(const arma::vec& f, const arma::vec& y, const arma::vec& mu, const
 // convertion between thresholds and delta thresholds
 arma::vec delta_to_threshold(const arma::vec& deltas);
 arma::vec threshold_to_delta(const arma::vec& thresholds);
+
+// cholesky decomposition
+arma::mat double_solve(const arma::mat& L, const arma::mat& X);
