@@ -8,8 +8,12 @@
 #'   of samples to record
 #' @param burn_iterations An integer vector of length one giving the number of
 #'   burn in (unrecorded) iterations
+#' @param fix_theta_flag A boolean matrix of n x h giving whether theta is fixed
+#' @param fix_theta_value A double matrix of n x h giving what value theta is fixed to
 #' @param THIN An integer giving the number of
 #'   thins per sample iterations
+#' @param CHAIN An integer giving the number of
+#'   chains
 #' @param vote_codes A named list giving the mapping from recorded responses to
 #'   {-1, 1, NA}. An element named "yea" gives the responses that should be
 #'   coded as 1, an element named "nay" gives the responses that should be coded
@@ -88,54 +92,72 @@
 #' str(samples)
 #'
 #' @export
-gpirtMCMC <- function(data, sample_iterations, burn_iterations, THIN=1, 
+gpirtMCMC <- function(data, sample_iterations, burn_iterations,
+                      fix_theta_flag = NULL, fix_theta_value = NULL,
+                      THIN=1, CHAIN=1,
                       vote_codes = list(yea = 1:3, nay = 4:6,
                                         missing = c(0, 7:9, NA)),
                       beta_prior_means = matrix(0, nrow = 2, ncol = ncol(data)),
                       beta_prior_sds = matrix(3, nrow = 2, ncol = ncol(data)),
                       theta_os = 1, theta_ls = 10,
-                      theta_init = NULL, thresholds = NULL) {
-    set.seed(SEED);
-    # First we make sure our data are in the proper format:
-    if ( !is.null(vote_codes) ){
-        data <- as.response_matrix(data, vote_codes)
-    }
-    
-    # Now we make sure we have initial values for theta
-    if ( is.null(theta_init) ) {
-        # initial theta as # of respondents by # of sessions
-        theta_init <- matrix(0, nrow=nrow(data), ncol=dim(data)[3])
-        theta_init[,1] <- rnorm(nrow(data))
-        if(dim(data)[3]>=2){
-            for(h in 2:dim(data)[3]){
-                    theta_init[,h] <- theta_init[,1]
+                      theta_init = NULL, thresholds = NULL, SEED=1) {
+    result = list()
+    for(chain in 1:CHAIN){
+        set.seed(SEED+chain-1);
+        # First we make sure our data are in the proper format:
+        if ( !is.null(vote_codes) ){
+            data <- as.response_matrix(data, vote_codes)
+        }
+
+        # Now we make sure we have initial values for fix_theta_flag/value
+        if ( is.null(fix_theta_flag) | is.null(fix_theta_value)){
+            n = dim(data)[1]
+            horizon = dim(data)[3]
+            fix_theta_flag <- matrix(0, nrow=n, ncol=horizon)
+            fix_theta_value <- matrix(0, nrow=n, ncol=horizon)
+        }
+        
+        # Now we make sure we have initial values for theta
+        if ( is.null(theta_init) ) {
+            # initial theta as # of respondents by # of sessions
+            theta_init <- matrix(0, nrow=nrow(data), ncol=dim(data)[3])
+            theta_init[,1] <- rnorm(nrow(data))
+            if(dim(data)[3]>=2){
+                for(h in 2:dim(data)[3]){
+                        theta_init[,h] <- theta_init[,1]
+                }
+            }
+            if(sum(fix_theta_flag)){
+                tmp = theta_init[fix_theta_flag==1]
+                theta_init = (theta_init - (tmp[2] + tmp[1])/2) / (tmp[2] - tmp[1]) * 2 
             }
         }
-    }
 
-    # Now we make sure we have initial values for thresholds
-    if ( is.null(thresholds) ) {
-        if(is.matrix(data)){
-            unique_ys = unique(data)
-        }else{
-            n = dim(data)[1]
-            m = dim(data)[2]
-            horizon = dim(data)[3]
-            unique_ys = unique(array(data, n*m*horizon))
-        }   
-        C = length(unique(unique_ys[!is.na(unique_ys)]))
-        thresholds <- rep(0, C+1)
-        thresholds[1] <- -Inf
-        for(i in 1:(C-1)){
-            thresholds[1+i] = qnorm(i/C, 0, 1, 1, 0)
+        # Now we make sure we have initial values for thresholds
+        if ( is.null(thresholds) ) {
+            if(is.matrix(data)){
+                unique_ys = unique(data)
+            }else{
+                n = dim(data)[1]
+                m = dim(data)[2]
+                horizon = dim(data)[3]
+                unique_ys = unique(array(data, n*m*horizon))
+            }   
+            C = length(unique(unique_ys[!is.na(unique_ys)]))
+            thresholds <- rep(0, C+1)
+            thresholds[1] <- -Inf
+            for(i in 1:(C-1)){
+                thresholds[1+i] = qnorm(i/C, 0, 1, 1, 0)
+            }
+            thresholds[C+1] = Inf
         }
-        thresholds[C+1] = Inf
+
+        # Now we can call the C++ sampler function
+        result[[chain]] <- .gpirtMCMC(
+            data, theta_init, sample_iterations, burn_iterations, fix_theta_flag, fix_theta_value, THIN,
+            beta_prior_means, beta_prior_sds, theta_os, theta_ls, thresholds
+        )
     }
-    # Now we can call the C++ sampler function
-    result <- .gpirtMCMC(
-        data, theta_init, sample_iterations, burn_iterations, THIN,
-        beta_prior_means, beta_prior_sds, theta_os, theta_ls, thresholds
-    )
     # And return the result
     return(result)
 }
