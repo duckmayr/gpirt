@@ -19,8 +19,6 @@ arma::mat draw_theta(const arma::vec& theta_star,
                      const arma::cube& y, const arma::vec& theta_prior,
                      const arma::cube& fstar, const arma::mat& mu_star,
                      const arma::vec& thresholds,
-                     const arma::mat& fix_theta_flag,
-                     const arma::mat& fix_theta_value,
                      const double& os,
                      const double& ls);
 

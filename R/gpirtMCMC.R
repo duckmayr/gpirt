@@ -8,8 +8,6 @@
 #'   of samples to record
 #' @param burn_iterations An integer vector of length one giving the number of
 #'   burn in (unrecorded) iterations
-#' @param fix_theta_flag A boolean matrix of n x h giving whether theta is fixed
-#' @param fix_theta_value A double matrix of n x h giving what value theta is fixed to
 #' @param THIN An integer giving the number of
 #'   thins per sample iterations
 #' @param CHAIN An integer giving the number of
@@ -93,7 +91,6 @@
 #'
 #' @export
 gpirtMCMC <- function(data, sample_iterations, burn_iterations,
-                      fix_theta_flag = NULL, fix_theta_value = NULL,
                       THIN=1, CHAIN=1,
                       vote_codes = list(yea = 1:3, nay = 4:6,
                                         missing = c(0, 7:9, NA)),
@@ -110,12 +107,12 @@ gpirtMCMC <- function(data, sample_iterations, burn_iterations,
         }
 
         # Now we make sure we have initial values for fix_theta_flag/value
-        if ( is.null(fix_theta_flag) | is.null(fix_theta_value)){
-            n = dim(data)[1]
-            horizon = dim(data)[3]
-            fix_theta_flag <- matrix(0, nrow=n, ncol=horizon)
-            fix_theta_value <- matrix(0, nrow=n, ncol=horizon)
-        }
+#    if ( is.null(fix_theta_flag) | is.null(fix_theta_value)){
+#             n = dim(data)[1]
+#             horizon = dim(data)[3]
+#             fix_theta_flag <- matrix(0, nrow=n, ncol=horizon)
+#             fix_theta_value <- matrix(0, nrow=n, ncol=horizon)
+#         }     
         
         # Now we make sure we have initial values for theta
         if ( is.null(theta_init) ) {
@@ -127,10 +124,10 @@ gpirtMCMC <- function(data, sample_iterations, burn_iterations,
                         theta_init[,h] <- theta_init[,1]
                 }
             }
-            if(sum(fix_theta_flag)){
-                tmp = theta_init[fix_theta_flag==1]
-                theta_init = (theta_init - (tmp[2] + tmp[1])/2) / (tmp[2] - tmp[1]) * 2 
-            }
+            # if(sum(fix_theta_flag)){
+            #     tmp = theta_init[fix_theta_flag==1]
+            #     theta_init = (theta_init - (tmp[2] + tmp[1])/2) / (tmp[2] - tmp[1]) * 2 
+            # }
         }
 
         # Now we make sure we have initial values for thresholds
@@ -154,7 +151,7 @@ gpirtMCMC <- function(data, sample_iterations, burn_iterations,
 
         # Now we can call the C++ sampler function
         result[[chain]] <- .gpirtMCMC(
-            data, theta_init, sample_iterations, burn_iterations, fix_theta_flag, fix_theta_value, THIN,
+            data, theta_init, sample_iterations, burn_iterations, THIN,
             beta_prior_means, beta_prior_sds, theta_os, theta_ls, thresholds
         )
     }

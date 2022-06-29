@@ -24,8 +24,6 @@ void set_seed_state(NumericVector seed_state){
 // [[Rcpp::export(.gpirtMCMC)]]
 Rcpp::List gpirtMCMC(const arma::cube& y, arma::mat theta,
                      const int sample_iterations, const int burn_iterations, 
-                     const arma::mat& fix_theta_flag,
-                     const arma::mat& fix_theta_value,
                      const int THIN,
                      const arma::mat& beta_prior_means,
                      const arma::mat& beta_prior_sds,
@@ -126,7 +124,7 @@ Rcpp::List gpirtMCMC(const arma::cube& y, arma::mat theta,
         f_star = draw_fstar(f, theta, theta_star, cholS, mu_star);
         
         theta = draw_theta(theta_star, y, theta_prior, f_star,
-             mu_star, thresholds,fix_theta_flag, fix_theta_value, theta_os, theta_ls);
+             mu_star, thresholds, theta_os, theta_ls);
         // Update f for new theta
         arma::mat idx = (theta+5)/0.01;
         for (arma::uword k = 0; k < n; ++k){

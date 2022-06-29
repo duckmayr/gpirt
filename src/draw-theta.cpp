@@ -4,8 +4,6 @@ arma::mat draw_theta(const arma::vec& theta_star,
                      const arma::cube& y, const arma::vec& theta_prior,
                      const arma::cube& fstar, const arma::mat& mu_star,
                      const arma::vec& thresholds,
-                     const arma::mat& fix_theta_flag,
-                     const arma::mat& fix_theta_value,
                      const double& os,
                      const double& ls) {
     arma::uword n = y.n_rows;
@@ -18,10 +16,10 @@ arma::mat draw_theta(const arma::vec& theta_star,
     for ( arma::uword i = 0; i < n; ++i ) {
         // For each respondent, extract their responses
         for ( arma::uword h = 0; h < horizon; ++h ){
-            if(fix_theta_flag(i,h)==1){
-                result(i,h) = fix_theta_value(i,h);
-            }
-            else{
+            // if(fix_theta_flag(i,h)==1){
+            //     result(i,h) = fix_theta_value(i,h);
+            // }
+            // else{
                 responses = y.slice(h).row(i).t();
                 arma::vec theta_post(N, arma::fill::zeros);
                 if(h>0 && os>0){
@@ -32,7 +30,7 @@ arma::mat draw_theta(const arma::vec& theta_star,
                     arma::vec t_prev = arma::linspace<arma::vec>(0, h-1, h);
                     arma::mat K_prev = K_time(arma::vec(1, arma::fill::value(h)),t_prev, os, ls);
                     arma::mat V = K_time(t_prev, t_prev, os, ls);
-                    V.diag() += 1e-4;
+                    V.diag() += 1e-2;
                     arma::mat L = arma::chol(V, "lower");
                     arma::mat tmp = arma::solve(arma::trimatl(L), K_prev.t());
                     double v = os * os - arma::dot(tmp.t(), tmp);
@@ -83,7 +81,6 @@ arma::mat draw_theta(const arma::vec& theta_star,
                     // Then (sort of) inverse sample
                     double u = R::runif(0.0, 1.0);
                     result(i, h) = theta_star[arma::sum(P<=u)];
-                }
             }
         }
     }
