@@ -1,4 +1,5 @@
 #include "gpirt.h"
+#include <fstream>
 
 arma::mat draw_theta(const arma::vec& theta_star,
                      const arma::cube& y, const arma::vec& theta_prior,
@@ -16,71 +17,65 @@ arma::mat draw_theta(const arma::vec& theta_star,
     for ( arma::uword i = 0; i < n; ++i ) {
         // For each respondent, extract their responses
         for ( arma::uword h = 0; h < horizon; ++h ){
-            // if(fix_theta_flag(i,h)==1){
-            //     result(i,h) = fix_theta_value(i,h);
-            // }
-            // else{
-                responses = y.slice(h).row(i).t();
-                arma::vec theta_post(N, arma::fill::zeros);
-                if(h>0 && os>0){
-                    // GP: dynamic theta across horizon
-                    // double os = 1.0;
-                    // double ls = 1 + horizon / 3.0;
-                    arma::vec theta_prev = result.row(i).subvec(0,h-1).t();
-                    arma::vec t_prev = arma::linspace<arma::vec>(0, h-1, h);
-                    arma::mat K_prev = K_time(arma::vec(1, arma::fill::value(h)),t_prev, os, ls);
-                    arma::mat V = K_time(t_prev, t_prev, os, ls);
-                    V.diag() += 1e-2;
-                    arma::mat L = arma::chol(V, "lower");
-                    arma::mat tmp = arma::solve(arma::trimatl(L), K_prev.t());
-                    double v = os * os - arma::dot(tmp.t(), tmp);
-                    tmp = double_solve(L, theta_prev);
-                    // double product = arma::dot(K_prev.row(0).t(), arma::inv(V)*theta_prev);;
-                    double product = arma::dot(K_prev.row(0).t(), tmp);
-                    arma::vec diff = theta_star - product;
-                    // double v = os * os - arma::dot(K_prev.row(0).t(), arma::inv(V)*K_prev.row(0).t());
-                    // Rcpp::Rcout << "prod: " << product2 - product << "\n";
-                    theta_post = (-0.5) * diff % diff / v;
-                }
-                else{
-                    // RDM: independent theta
-                    theta_post = theta_prior;
-                }
+            responses = y.slice(h).row(i).t();
+            arma::vec theta_post(N, arma::fill::zeros);
+            if(h>0 && os>0){
+                // GP: dynamic theta across horizon
+                arma::vec theta_prev = result.row(i).subvec(0,h-1).t();
+                arma::vec t_prev = arma::linspace<arma::vec>(0, h-1, h);
+                arma::mat K_prev = K_time(arma::vec(1, arma::fill::value(h)),t_prev, os, ls);
+                arma::mat V = K_time(t_prev, t_prev, os, ls);
+                V.diag() += 1e-2;
+                arma::mat L = arma::chol(V, "lower");
+                arma::mat tmp = arma::solve(arma::trimatl(L), K_prev.t());
+                double v = os * os - arma::dot(tmp.t(), tmp);
+                tmp = double_solve(L, theta_prev);
+                double product = arma::dot(K_prev.row(0).t(), tmp);
+                arma::vec diff = theta_star - product;
+                theta_post = (-0.5) * diff % diff / v;
+            }
+            else{
+                // RDM: independent theta
+                theta_post = theta_prior;
+            }
                 
-                if(h>0 && ls<0){
-                    // CST: constant theta across horizon
-                    // no need to sample for later horizons
-                    result(i, h) = result(i, 0);
-                }
-                else if(h==0 && ls<0){
-                    // CST: sample first theta based on all horizon data
-                    P = theta_post;
-                    for ( arma::uword h = 0; h < horizon; ++h ){
-                        for ( arma::uword k = 0; k < N; ++k ) {
-                            P[k] += ll_bar(fstar.slice(h).row(k).t(), 
-                                y.slice(h).row(i).t(), mu_star.row(k).t(), thresholds);
-                        }
-                    }
-                    P = arma::exp(P);
-                    P = arma::cumsum(P);
-                    P = (P - P.min()) / (P.max() - P.min());
-                    double u = R::runif(0.0, 1.0);
-                    result(i, h) = theta_star[arma::sum(P<=u)];
-                }
-                else{
+            if(h>0 && ls<0){
+                // CST: constant theta across horizon
+                // no need to sample for later horizons
+                result(i, h) = result(i, 0);
+            }
+            else if(h==0 && ls<0){
+                // CST: sample first theta based on all horizon data
+                P = theta_post;
+                for ( arma::uword h = 0; h < horizon; ++h ){
                     for ( arma::uword k = 0; k < N; ++k ) {
-                        // Then for each value in theta_star,
-                        // get log likelihood + log posterior
-                        P[k] = theta_post[k] + ll_bar(fstar.slice(h).row(k).t(), 
-                                    responses, mu_star.row(k).t(), thresholds);
+                        P[k] += ll_bar(fstar.slice(h).row(k).t(), 
+                            y.slice(h).row(i).t(), mu_star.row(k).t(), thresholds);
                     }
-                    // Exponeniate, cumsum, then scale to [0, 1] for the "CDF"
-                    P = arma::exp(P);
-                    P = arma::cumsum(P);
-                    P = (P - P.min()) / (P.max() - P.min());
-                    // Then (sort of) inverse sample
-                    double u = R::runif(0.0, 1.0);
-                    result(i, h) = theta_star[arma::sum(P<=u)];
+                }
+                P = arma::exp(P);
+                P = arma::cumsum(P);
+                P = (P - P.min()) / (P.max() - P.min());
+                double u = R::runif(0.0, 1.0);
+                result(i, h) = theta_star[arma::sum(P<=u)];
+            }
+            else{
+               
+                for ( arma::uword k = 0; k < N; ++k ) {
+                    // Then for each value in theta_star,
+                    // get log likelihood + log posterior
+                    P[k] = theta_post[k] + ll_bar(fstar.slice(h).row(k).t(), 
+                                responses, mu_star.row(k).t(), thresholds);
+                }
+
+                // Exponeniate, cumsum, then scale to [0, 1] for the "CDF"
+                P = arma::exp(P);
+                P = arma::cumsum(P);
+                P = (P - P.min()) / (P.max() - P.min());
+
+                // Then (sort of) inverse sample
+                double u = R::runif(0.0, 1.0);
+                result(i, h) = theta_star[arma::sum(P<=u)];
             }
         }
     }
