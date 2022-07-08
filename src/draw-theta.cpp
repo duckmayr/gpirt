@@ -1,5 +1,6 @@
 #include "gpirt.h"
 #include <fstream>
+#include <math.h> 
 
 arma::mat draw_theta(const arma::vec& theta_star,
                      const arma::cube& y, const arma::vec& theta_prior,
@@ -53,6 +54,7 @@ arma::mat draw_theta(const arma::vec& theta_star,
                             y.slice(h).row(i).t(), mu_star.row(k).t(), thresholds);
                     }
                 }
+                P = (P - P.min()/2);
                 P = arma::exp(P);
                 P = arma::cumsum(P);
                 P = (P - P.min()) / (P.max() - P.min());
@@ -69,6 +71,7 @@ arma::mat draw_theta(const arma::vec& theta_star,
                 }
 
                 // Exponeniate, cumsum, then scale to [0, 1] for the "CDF"
+                P = (P - P.min()/2);
                 P = arma::exp(P);
                 P = arma::cumsum(P);
                 P = (P - P.min()) / (P.max() - P.min());

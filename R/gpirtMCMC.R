@@ -24,15 +24,15 @@
 #' @param beta_prior_sds A numeric matrix of with \code{ncol(data)} columns
 #'   and two rows giving the prior standard deviations for the items' linear
 #'   means' intercept and slope; by default, a matrix of threes
-#' @param beta_proposal_sds A numeric matrix of with \code{ncol(data)} columns
-#'   and two rows giving the standard deviations for proposals for the items'
-#'   linear means' intercept and slope; by default a matrix filled with 0.1
+#' @param theta_os output scale
+#' @param theta_ls length scale
 #' @param theta_init A vector of length \code{nrow(data)} giving initial values
 #'   for the respondent ideology parameters; if NULL (the default), the initial
 #'   values are drawn from the parameters' prior distributions.
 #' @param thresholds A vector of length \code{C+1} where \code{C} is the number
 #'   of all categories; if NULL (the default), the values are chosen from -Inf to Inf
 #'    of length \code{C+1} with each y having equal probablity under prior mean.
+#' @param seed SEED
 #'
 #' @return A list with elements
 #'   \describe{
