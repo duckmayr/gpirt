@@ -24,15 +24,16 @@
 #' @param beta_prior_sds A numeric matrix of with \code{ncol(data)} columns
 #'   and two rows giving the prior standard deviations for the items' linear
 #'   means' intercept and slope; by default, a matrix of threes
-#' @param theta_os output scale
-#' @param theta_ls length scale
+#' @param theta_os A numeric value giving output scale of dynamic ability GP model
+#' @param theta_ls A numeric value giving length scale of dynamic ability GP model
 #' @param theta_init A vector of length \code{nrow(data)} giving initial values
 #'   for the respondent ideology parameters; if NULL (the default), the initial
 #'   values are drawn from the parameters' prior distributions.
 #' @param thresholds A vector of length \code{C+1} where \code{C} is the number
 #'   of all categories; if NULL (the default), the values are chosen from -Inf to Inf
 #'    of length \code{C+1} with each y having equal probablity under prior mean.
-#' @param seed SEED
+#' @param seed An integar giving the random seed
+#' @param constant_IRF A binary indicator of whether IRFs are constant over time
 #'
 #' @return A list with elements
 #'   \describe{
@@ -97,22 +98,16 @@ gpirtMCMC <- function(data, sample_iterations, burn_iterations,
                       beta_prior_means = matrix(0, nrow = 2, ncol = ncol(data)),
                       beta_prior_sds = matrix(3, nrow = 2, ncol = ncol(data)),
                       theta_os = 1, theta_ls = 10,
-                      theta_init = NULL, thresholds = NULL, SEED=1) {
+                      theta_init = NULL, thresholds = NULL, SEED=1, constant_IRF=0) {
+    # Setup result list for multiple chains
     result = list()
     for(chain in 1:CHAIN){
+        # Set seed for each chain
         set.seed(SEED+chain-1);
         # First we make sure our data are in the proper format:
         if ( !is.null(vote_codes) ){
             data <- as.response_matrix(data, vote_codes)
-        }
-
-        # Now we make sure we have initial values for fix_theta_flag/value
-#    if ( is.null(fix_theta_flag) | is.null(fix_theta_value)){
-#             n = dim(data)[1]
-#             horizon = dim(data)[3]
-#             fix_theta_flag <- matrix(0, nrow=n, ncol=horizon)
-#             fix_theta_value <- matrix(0, nrow=n, ncol=horizon)
-#         }     
+        }  
         
         # Now we make sure we have initial values for theta
         if ( is.null(theta_init) ) {
@@ -124,10 +119,6 @@ gpirtMCMC <- function(data, sample_iterations, burn_iterations,
                         theta_init[,h] <- theta_init[,1]
                 }
             }
-            # if(sum(fix_theta_flag)){
-            #     tmp = theta_init[fix_theta_flag==1]
-            #     theta_init = (theta_init - (tmp[2] + tmp[1])/2) / (tmp[2] - tmp[1]) * 2 
-            # }
         }
 
         # Now we make sure we have initial values for thresholds
@@ -152,7 +143,7 @@ gpirtMCMC <- function(data, sample_iterations, burn_iterations,
         # Now we can call the C++ sampler function
         result[[chain]] <- .gpirtMCMC(
             data, theta_init, sample_iterations, burn_iterations, THIN,
-            beta_prior_means, beta_prior_sds, theta_os, theta_ls, thresholds
+            beta_prior_means, beta_prior_sds, theta_os, theta_ls, thresholds, constant_IRF
         )
     }
     # And return the result

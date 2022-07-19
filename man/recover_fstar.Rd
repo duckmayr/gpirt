@@ -7,9 +7,12 @@
 recover_fstar(
   seed_state,
   f,
+  y,
   theta,
-  beta_prior_means = matrix(0, nrow = 2, ncol = ncol(f)),
-  beta_prior_sds = matrix(3, nrow = 2, ncol = ncol(f))
+  thresholds,
+  beta_prior_means = matrix(0, nrow = 2, ncol = ncol(y)),
+  beta_prior_sds = matrix(0.5, nrow = 2, ncol = ncol(y)),
+  constant_IRF = 0
 )
 }
 \arguments{
@@ -19,8 +22,13 @@ recover_fstar(
 n is number of respondents, m is number of items per session, and
 h is number of sessions.}
 
+\item{y}{A matrix of shape n by m by h, giving responses for n respondents
+IRFs and h sessions}
+
 \item{theta}{A matrix of shape n by h, giving initial values
 for the respondent ideology parameters}
+
+\item{thresholds}{A vector of length C+1, giving threshold vector}
 
 \item{beta_prior_means}{A numeric matrix of with \code{ncol(data)} columns
 and two rows giving the prior means for the items' linear means' intercept
@@ -29,6 +37,8 @@ and slope; by default, a matrix of zeros}
 \item{beta_prior_sds}{A numeric matrix of with \code{ncol(data)} columns
 and two rows giving the prior standard deviations for the items' linear
 means' intercept and slope; by default, a matrix of threes}
+
+\item{constant_IRF}{A binary indicator of whether IRFs are constant across sessions}
 }
 \value{
 A list with elements

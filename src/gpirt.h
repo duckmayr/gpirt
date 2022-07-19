@@ -6,13 +6,16 @@ void set_seed(int seed);
 Rcpp::NumericVector get_seed_state();
 
 // Function to draw f
-arma::cube draw_f(const arma::cube& f, const arma::cube& y, const arma::cube& cholS,
-                 const arma::cube& mu, const arma::vec& thresholds);
+arma::cube draw_f(const arma::cube& f, const arma::mat& theta, const arma::cube& y, const arma::cube& cholS,
+                 const arma::cube& mu, const arma::vec& thresholds, const int constant_IRF);
 
 // Function to draw fstar
-arma::cube draw_fstar(const arma::cube& f, const arma::mat& theta,
-                     const arma::vec& theta_star, const arma::cube& L,
-                     const arma::mat& mu_star);
+arma::cube draw_fstar(const arma::cube& f, 
+                      const arma::mat& theta,
+                      const arma::vec& theta_star, 
+                      const arma::cube& L,
+                      const arma::mat& mu_star,
+                      const int constant_IRF);
 
 // Function to draw theta
 arma::mat draw_theta(const arma::vec& theta_star,

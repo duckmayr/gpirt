@@ -11,7 +11,8 @@ Rcpp::List recover_fstar(int seed,
                          const arma::mat& theta,
                          const arma::vec& thresholds,
                          const arma::mat& beta_prior_means,
-                         const arma::mat& beta_prior_sds){
+                         const arma::mat& beta_prior_sds,
+                         const int constant_IRF){
     arma::uword n = f.n_rows;
     arma::uword m = f.n_cols;
     arma::uword horizon = f.n_slices;
@@ -52,11 +53,11 @@ Rcpp::List recover_fstar(int seed,
                         X.slice(h).t(), "lower");
         }
     }
-  
     // restore seed
     set_seed(seed);
-    f = draw_f(f, y, cholS, mu, thresholds);
-    arma::cube f_star = draw_fstar(f, theta, theta_star, cholS, mu_star);
+    f = draw_f(f, theta, y, cholS, mu, thresholds, constant_IRF);
+    Rcpp::Rcout << "f_prime: " << f.slice(0).col(0).row(50) << "\n";
+    arma::cube f_star = draw_fstar(f, theta, theta_star, cholS, mu_star, constant_IRF);
     Rcpp::List result = Rcpp::List::create(Rcpp::Named("fstar", f_star));
 
     return result;
