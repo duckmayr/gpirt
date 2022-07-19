@@ -56,7 +56,6 @@ Rcpp::List recover_fstar(int seed,
     // restore seed
     set_seed(seed);
     f = draw_f(f, theta, y, cholS, mu, thresholds, constant_IRF);
-    Rcpp::Rcout << "f_prime: " << f.slice(0).col(0).row(50) << "\n";
     arma::cube f_star = draw_fstar(f, theta, theta_star, cholS, mu_star, constant_IRF);
     Rcpp::List result = Rcpp::List::create(Rcpp::Named("fstar", f_star));
 
