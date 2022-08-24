@@ -36,7 +36,7 @@ arma::cube draw_fstar(const arma::cube& f,
                       const arma::mat& theta,
                       const arma::vec& theta_star, 
                       const arma::cube& L,
-                      const arma::mat& mu_star,
+                      const arma::cube& mu_star,
                       const int constant_IRF) {
     arma::uword n = f.n_rows;
     arma::uword horizon = f.n_slices;
@@ -48,7 +48,7 @@ arma::cube draw_fstar(const arma::cube& f,
         // draw fstar separately for non-constant IRF
         for ( arma::uword h = 0; h < horizon; ++h ){
             results.slice(h) = draw_fstar_(f.slice(h), theta.col(h), \
-                                theta_star, L.slice(h), mu_star);
+                                theta_star, L.slice(h), mu_star.slice(h));
         }
     }
     else{
@@ -78,7 +78,7 @@ arma::cube draw_fstar(const arma::cube& f,
                         X_constant.t(), "lower");
         arma::mat f_star(N, m);
         f_star = draw_fstar_(f_constant, theta_constant, \
-                                theta_star, L_constant, mu_star);
+                                theta_star, L_constant, mu_star.slice(0));
 
         // store the same fstar in the result object for all horizons
         for ( arma::uword h = 0; h < horizon; ++h ){

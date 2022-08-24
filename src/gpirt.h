@@ -14,20 +14,20 @@ arma::cube draw_fstar(const arma::cube& f,
                       const arma::mat& theta,
                       const arma::vec& theta_star, 
                       const arma::cube& L,
-                      const arma::mat& mu_star,
+                      const arma::cube& mu_star,
                       const int constant_IRF);
 
 // Function to draw theta
 arma::mat draw_theta(const arma::vec& theta_star,
                      const arma::cube& y, const arma::vec& theta_prior,
-                     const arma::cube& fstar, const arma::mat& mu_star,
+                     const arma::cube& fstar, const arma::cube& mu_star,
                      const arma::vec& thresholds,
                      const double& os,
                      const double& ls);
 
 // Function to draw beta
-arma::mat draw_beta(const arma::mat& beta, const arma::mat& X,
-                    const arma::mat& y, const arma::mat& f,
+arma::cube draw_beta(arma::cube& beta, const arma::cube& X,
+                    const arma::cube& y, const arma::cube& f,
                     const arma::mat& prior_means, const arma::mat& prior_sds,
                     const arma::mat& proposal_sds, const arma::vec& thresholds);
 

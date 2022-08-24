@@ -2,28 +2,25 @@
 
 arma::mat draw_theta(const arma::vec& theta_star,
                      const arma::cube& y, const arma::vec& theta_prior,
-                     const arma::cube& fstar, const arma::mat& mu_star,
+                     const arma::cube& fstar, const arma::cube& mu_star,
                      const arma::vec& thresholds,
                      const double& os,
                      const double& ls) {
 
     // Bookkeeping variables
     arma::uword n = y.n_rows;   // # of respondents 
-    arma::uword m = y.n_cols;   // # of item response functions per session
+    // arma::uword m = y.n_cols;   // # of item response functions per session
     arma::uword horizon = y.n_slices;  // # of sessions
     arma::uword N = theta_star.n_elem; // # of grids
 
     // Setup results objects
     arma::mat result(n, horizon);
-    arma::vec responses(m);
     arma::vec P(N, arma::fill::zeros);
 
     // Iterate each respondents
     for ( arma::uword i = 0; i < n; ++i ) {
         // Iterate each session
         for ( arma::uword h = 0; h < horizon; ++h ){
-            // For each respondent, extract their responses
-            responses = y.slice(h).row(i).t();
             // Setup unnormalized posterior vector
             arma::vec theta_post(N, arma::fill::zeros);
             if(h>0 && os>0){
@@ -36,11 +33,25 @@ arma::mat draw_theta(const arma::vec& theta_star,
                 V.diag()             += 1e-2;
                 arma::mat L          = arma::chol(V, "lower");
                 arma::mat tmp        = arma::solve(arma::trimatl(L), K_prev.t());
-                double v             = os * os - arma::dot(tmp.t(), tmp);
+                double v             = os * os - arma::dot(tmp.t(), tmp) + 1e-2;
                 tmp                  = double_solve(L, theta_prev);
                 double product       = arma::dot(K_prev.row(0).t(), tmp);
                 arma::vec diff       = theta_star - product;
                 theta_post           = (-0.5) * diff % diff / v;
+                // arma::vec theta_other = result.shed_col(h).row(i).t();
+                // arma::vec t_other     = arma::linspace<arma::vec>(0, horizon-1, horizon);
+                // t_other              = t_other.shed_row(h);
+                // arma::mat K_other    = K_time(arma::vec(1, arma::fill::value(h)),t_other, os, ls);
+                // arma::mat V          = K_time(t_other, t_other, os, ls);
+                // V.diag()             += 1e-4;
+                // arma::mat L          = arma::chol(V, "lower");
+                // arma::mat tmp        = arma::solve(arma::trimatl(L), K_other.t());
+                // double v             = os * os - arma::dot(tmp.t(), tmp);
+                // tmp                  = double_solve(L, theta_other);
+                // double product       = arma::dot(K_other.row(0).t(), tmp);
+                // arma::vec diff       = theta_star - product;
+                // theta_post           = (-0.5) * diff % diff / v;
+
             }
             else{
                 // RDM: independent theta
@@ -60,7 +71,7 @@ arma::mat draw_theta(const arma::vec& theta_star,
                 for ( arma::uword h = 0; h < horizon; ++h ){
                     for ( arma::uword k = 0; k < N; ++k ) {
                         P[k] += ll_bar(fstar.slice(h).row(k).t(), 
-                            y.slice(h).row(i).t(), mu_star.row(k).t(), thresholds);
+                            y.slice(h).row(i).t(), mu_star.slice(h).row(k).t(), thresholds);
                     }
                 }
 
@@ -78,11 +89,12 @@ arma::mat draw_theta(const arma::vec& theta_star,
                 result(i, h) = theta_star[arma::sum(P<=u)];
             }
             else{
+                P = theta_post;
                 for ( arma::uword k = 0; k < N; ++k ) {
                     // Then for each value in theta_star,
                     // get log likelihood + log posterior
-                    P[k] = theta_post[k] + ll_bar(fstar.slice(h).row(k).t(), 
-                                responses, mu_star.row(k).t(), thresholds);
+                    P[k] += ll_bar(fstar.slice(h).row(k).t(), 
+                                y.slice(h).row(i).t(), mu_star.slice(h).row(k).t(), thresholds);
                 }
 
                 // Add constant value to all entried in the unnormalized ll vector

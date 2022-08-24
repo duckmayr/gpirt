@@ -24,6 +24,9 @@
 #' @param beta_prior_sds A numeric matrix of with \code{ncol(data)} columns
 #'   and two rows giving the prior standard deviations for the items' linear
 #'   means' intercept and slope; by default, a matrix of threes
+#' @param beta_proposal_sds A numeric matrix of with \code{ncol(data)} columns
+#'   and two rows giving the standard deviations for proposals for the items'
+#'   linear means' intercept and slope; by default a matrix filled with 0.1
 #' @param theta_os A numeric value giving output scale of dynamic ability GP model
 #' @param theta_ls A numeric value giving length scale of dynamic ability GP model
 #' @param theta_init A vector of length \code{nrow(data)} giving initial values
@@ -97,6 +100,7 @@ gpirtMCMC <- function(data, sample_iterations, burn_iterations,
                                         missing = c(0, 7:9, NA)),
                       beta_prior_means = matrix(0, nrow = 2, ncol = ncol(data)),
                       beta_prior_sds = matrix(3, nrow = 2, ncol = ncol(data)),
+                      beta_proposal_sds = matrix(0.1, nrow = 2, ncol = ncol(data)),
                       theta_os = 1, theta_ls = 10,
                       theta_init = NULL, thresholds = NULL, SEED=1, constant_IRF=0) {
     # Setup result list for multiple chains
@@ -143,7 +147,8 @@ gpirtMCMC <- function(data, sample_iterations, burn_iterations,
         # Now we can call the C++ sampler function
         result[[chain]] <- .gpirtMCMC(
             data, theta_init, sample_iterations, burn_iterations, THIN,
-            beta_prior_means, beta_prior_sds, theta_os, theta_ls, thresholds, constant_IRF
+            beta_prior_means, beta_prior_sds,beta_proposal_sds,
+            theta_os, theta_ls, thresholds, constant_IRF
         )
     }
     # And return the result

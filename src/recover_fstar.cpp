@@ -9,6 +9,7 @@ Rcpp::List recover_fstar(int seed,
                          arma::cube f,
                          const arma::cube& y,
                          const arma::mat& theta,
+                         const arma::cube& beta,
                          const arma::vec& thresholds,
                          const arma::mat& beta_prior_means,
                          const arma::mat& beta_prior_sds,
@@ -33,7 +34,7 @@ Rcpp::List recover_fstar(int seed,
     // set up mu
     arma::cube mu(n,m,horizon);
     for (arma::uword h = 0; h < horizon; h++){
-        mu.slice(h) = X.slice(h) * beta_prior_means;
+        mu.slice(h) = X.slice(h) * beta.slice(h);
     }
 
     // set up mu_star
@@ -42,15 +43,19 @@ Rcpp::List recover_fstar(int seed,
     arma::mat Xstar(N, 2);
     Xstar.col(0) = arma::ones<arma::vec>(N);
     Xstar.col(1) = theta_star;
-    arma::mat mu_star = Xstar * beta_prior_means;
+    arma::cube mu_star(N, m, horizon);
+    for (arma::uword h = 0; h < horizon; h++){
+        mu_star.slice(h) = Xstar * beta.slice(h);
+    }
 
     // set up cholS
     arma::cube cholS(n, n, horizon);
     for (arma::uword h = 0; h < horizon; h++){
         for ( arma::uword j = 0; j < m; ++j ) {
-            cholS.slice(h) = arma::chol(S.slice(h)+ \
-                        X.slice(h)*arma::diagmat(square(beta_prior_sds.col(j)))* \
-                        X.slice(h).t(), "lower");
+            // cholS.slice(h) = arma::chol(S.slice(h)+ \
+            //             X.slice(h)*arma::diagmat(square(beta_prior_sds.col(j)))* \
+            //             X.slice(h).t(), "lower");
+            cholS.slice(h) = arma::chol(S.slice(h), "lower");
         }
     }
     // restore seed

@@ -10,6 +10,8 @@
 #' IRFs and h sessions
 #' @param theta A matrix of shape n by h, giving initial values
 #'   for the respondent ideology parameters
+#' @param beta A tensor of shape 2 by n by h, giving intercept/slope
+#'   for the mean values of IRF
 #' @param thresholds A vector of length C+1, giving threshold vector
 #' @param beta_prior_means A numeric matrix of with \code{ncol(data)} columns
 #'   and two rows giving the prior means for the items' linear means' intercept
@@ -31,13 +33,13 @@
 #'
 #'
 #' @export 
-recover_fstar <- function(seed, f, y, theta, thresholds,
+recover_fstar <- function(seed, f, y, theta, beta, thresholds,
                       beta_prior_means = matrix(0, nrow = 2, ncol = ncol(y)),
                       beta_prior_sds = matrix(0.5, nrow = 2, ncol = ncol(y)),
                       constant_IRF=0) {
     # Now we can call the C++ function
     result <- .recover_fstar(
-            seed, f, y, theta, thresholds, beta_prior_means, beta_prior_sds, constant_IRF
+            seed, f, y, theta, beta, thresholds, beta_prior_means, beta_prior_sds, constant_IRF
     )
     # And return the result
     return(result)
