@@ -54,7 +54,7 @@ Rcpp::List gpirtMCMC(const arma::cube& y, arma::mat theta,
     arma::cube f(n, m, horizon);
     arma::cube cholS(n, n, horizon);
     arma::cube beta(2, m, horizon);
-    
+
     // We need to have a matrix with a column of ones and a column of theta
     // for generating the linear mean
     
@@ -126,7 +126,7 @@ Rcpp::List gpirtMCMC(const arma::cube& y, arma::mat theta,
         for (arma::uword h = 0; h < horizon; h++){
             for ( arma::uword j = 0; j < m; ++j ) {
                 f.slice(h).col(j) = f_constant.col(j).subvec(h*n, (h+1)*n-1);
-                mu.slice(h).col(j) = mu_constant.col(j);
+                mu.slice(h).col(j) = mu_constant.col(j).subvec(h*n, (h+1)*n-1);
                 cholS.slice(h) = cholS_constant.submat(h*n,h*n,(h+1)*n-1,(h+1)*n-1);
             }
         }
