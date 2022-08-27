@@ -25,6 +25,12 @@ arma::mat draw_theta(const arma::vec& theta_star,
                      const double& os,
                      const double& ls);
 
+arma::mat draw_theta_f(const arma::cube& y,
+                     const arma::cube& f, const arma::mat& theta,
+                     const arma::vec& thresholds,
+                     const double& os,
+                     const double& ls);
+
 // Function to draw beta
 arma::cube draw_beta(arma::cube& beta, const arma::cube& X,
                     const arma::cube& y, const arma::cube& f,

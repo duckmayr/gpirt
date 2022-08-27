@@ -54,25 +54,45 @@ arma::cube draw_fstar(const arma::cube& f,
     else{
         // draw fstar for constant IRF using all horizon theta/f
         // reshape f/theta
-        arma::mat f_constant(n*horizon, m);
-        arma::vec theta_constant(n*horizon);
+        arma::mat f_constant_all(n*horizon, m);
+        arma::vec theta_constant_all(n*horizon);
         for (arma::uword h = 0; h < horizon; h++){
-            theta_constant.subvec(h*n, (h+1)*n-1) = theta.col(h);
+            theta_constant_all.subvec(h*n, (h+1)*n-1) = theta.col(h);
             for ( arma::uword j = 0; j < m; ++j ) {
-                f_constant.col(j).subvec(h*n, (h+1)*n-1) = f.slice(h).col(j);
+                f_constant_all.col(j).subvec(h*n, (h+1)*n-1) = f.slice(h).col(j);
             }
         }
+        // implement naive 100 inducing points
+        // evenly spread inducing locations in the range of current theta
+        // use knn for inducing values 
+        int n_induced_points = 100;
+        arma::mat f_constant(n_induced_points, m);
+        arma::vec theta_constant(f_constant.n_rows);
+        theta_constant = arma::linspace(theta.min(), theta.max(), n_induced_points);
+        for (arma::uword j = 0; j < m; ++j)
+        {
+            // sort theta_constant_all/f_constant_all
+            // arma::uvec indices = sort_index(f_constant_all.col(h));
+            // f_constant_all.col(h) = f_constant_all.col(h)[indices];
+            // theta_constant_all.col(h) = theta_constant_all.col(h)[indices];
+            // interpolate induced values
+            arma::vec points;
+            arma::interp1(theta_constant_all, f_constant_all.col(j).t(),
+                    theta_constant, points, "linear");
+            f_constant.col(j) = points;
+        }
+        
         // Set up X
-        arma::mat X_constant(n*horizon, 2);
-        X_constant.col(0) = arma::ones<arma::vec>(n*horizon);
+        arma::mat X_constant(f_constant.n_rows, 2);
+        X_constant.col(0) = arma::ones<arma::vec>(f_constant.n_rows);
         X_constant.col(1) = theta_constant;
         // Set up S
-        arma::mat S_constant = arma::zeros<arma::mat>(n*horizon, n*horizon);
+        arma::mat S_constant = arma::zeros<arma::mat>(f_constant.n_rows, f_constant.n_rows);
         S_constant = K(theta_constant, theta_constant);
         S_constant.diag() += 1e-6;
         // Set up L
         arma::vec beta_prior_sds = 0.5*arma::ones<arma::vec>(2);
-        arma::mat L_constant(n*horizon, n*horizon);
+        arma::mat L_constant(f_constant.n_rows, f_constant.n_rows);
         L_constant = arma::chol(S_constant + \
                         X_constant*arma::diagmat(square(beta_prior_sds))* \
                         X_constant.t(), "lower");
