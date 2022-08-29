@@ -8,6 +8,13 @@ inline double compute_ll(const double nu,
                      const arma::vec& thresholds){
     // round nu to the nearest index grid
     int theta_index = round((nu+5)/0.01);
+    if(theta_index<0){
+        theta_index = 0;
+    }else if (theta_index>1001)
+    {
+        theta_index=1001;
+    }
+    
     arma::rowvec f = fstar.row(theta_index);
     arma::rowvec mu = mu_star.row(theta_index);
     
@@ -74,6 +81,7 @@ inline arma::vec draw_theta_ess(const arma::mat& y,
             epsilon = R::runif(epsilon_min, epsilon_max);
         }
     }
+    nu_prime.clamp(-5.0,5.0);
     return nu_prime;
 }
 
