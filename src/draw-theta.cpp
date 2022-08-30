@@ -32,7 +32,7 @@ inline arma::vec draw_theta_ess(const arma::mat& y,
     // First we draw "an ellipse" -- a vector drawn from a multivariate
     // normal with mean zero and covariance Sigma.
     arma::vec nu = rmvnorm(L);
-
+    nu.clamp(-5.0,5.0);
     // Then we calculate the log likelihood threshold for acceptance, "log_y"
     double u = R::runif(0.0,1.0);
     double log_y = std::log(u);
