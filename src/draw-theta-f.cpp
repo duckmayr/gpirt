@@ -63,7 +63,7 @@ arma::mat draw_theta_f(const arma::cube& y,
             arma::vec t_prev     = arma::linspace<arma::vec>(0, h-1, h);
             arma::mat K_prev     = K_time(arma::vec(1, arma::fill::value(h)),t_prev, os, ls);
             arma::mat V          = K_time(t_prev, t_prev, os, ls);
-            V.diag()             += 1e-2;
+            V.diag()             += 1e-6;
             arma::mat L          = arma::chol(V, "lower");
             arma::mat tmp        = arma::solve(arma::trimatl(L), K_prev.t());
             double v             = os * os - arma::dot(tmp.t(), tmp) + 1e-2;

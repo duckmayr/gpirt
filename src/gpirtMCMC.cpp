@@ -185,6 +185,9 @@ Rcpp::List gpirtMCMC(const arma::cube& y, arma::mat theta,
                 f.slice(h).row(k) = f_star.slice(h).row(int(idx(k, h)));
             }
         }
+        beta = draw_beta(beta, X, y, f, beta_prior_means, \
+                    beta_prior_sds, beta_step_sizes, thresholds);
+                    
         // set up S, mu, cholS from theta
         X.col(1) = theta;
         for (arma::uword h = 0; h < horizon; h++){
@@ -196,9 +199,6 @@ Rcpp::List gpirtMCMC(const arma::cube& y, arma::mat theta,
             S.slice(h) = K(theta.col(h), theta.col(h));
             S.slice(h).diag() += 1e-6;
         }
-        
-        beta = draw_beta(beta, X, y, f, beta_prior_means, \
-                    beta_prior_sds, beta_step_sizes, thresholds);
 
         for (arma::uword h = 0; h < horizon; h++){
             // cholS.slice(h) = arma::chol(S.slice(h)+\
