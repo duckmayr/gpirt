@@ -67,6 +67,7 @@ Rcpp::List gpirtMCMC(const arma::cube& y, arma::mat theta,
             for ( arma::uword j = 0; j < m; ++j ) {
                 for ( arma::uword p = 0; p < 2; ++p ) {
                     beta.slice(h).col(j).row(p) = R::rnorm(beta_prior_means(p, j), beta_prior_sds(p, j));
+                    // beta.slice(h).col(j).row(p) = 0;
                 }
                 mu.slice(h) = X.slice(h) * beta.slice(h);
             }
@@ -110,6 +111,7 @@ Rcpp::List gpirtMCMC(const arma::cube& y, arma::mat theta,
         for ( arma::uword j = 0; j < m; ++j ) {
             for ( arma::uword p = 0; p < 2; ++p ) {
                 beta.slice(0).col(j).row(p) = R::rnorm(beta_prior_means(p, j), beta_prior_sds(p, j));
+                // beta.slice(0).col(j).row(p) = 0;
             }
         }
         mu_constant = X_constant * beta.slice(0);
@@ -185,11 +187,12 @@ Rcpp::List gpirtMCMC(const arma::cube& y, arma::mat theta,
                 f.slice(h).row(k) = f_star.slice(h).row(int(idx(k, h)));
             }
         }
-        beta = draw_beta(beta, X, y, f, beta_prior_means, \
-                    beta_prior_sds, beta_step_sizes, thresholds);
-                    
+
         // set up S, mu, cholS from theta
         X.col(1) = theta;
+        beta = draw_beta(beta, X, y, f, beta_prior_means, \
+                     beta_prior_sds, beta_step_sizes, thresholds);
+
         for (arma::uword h = 0; h < horizon; h++){
             mu.slice(h) = X.slice(h) * beta.slice(h);
             mu_star.slice(h) = Xstar * beta.slice(h);
