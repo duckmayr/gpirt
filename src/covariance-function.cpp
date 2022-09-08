@@ -7,7 +7,7 @@ arma::mat K(const arma::vec& x1, const arma::vec& x2) {
     for ( arma::uword j = 0; j < m; ++j ) {
         for ( arma::uword i = 0; i < n; ++i ) {
             double diff = x1[i] - x2[j];
-            result(i, j) = 0.25 * 0.25 * std::exp(-0.5 * diff * diff);
+            result(i, j) = std::exp(-0.5 * diff * diff);
         }
     }
     return result;

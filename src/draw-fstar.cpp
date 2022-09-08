@@ -26,7 +26,8 @@ inline arma::mat draw_fstar_(const arma::mat& f, const arma::vec& theta,
     arma::vec draw_mean(N);
     for ( arma::uword j = 0; j < m; ++j ) {
         alpha = double_solve(L, f.col(j));
-        draw_mean = kstarT * alpha + mu_star.col(j);
+        // draw_mean = kstarT * alpha + mu_star.col(j);
+        draw_mean = kstarT * alpha;
         result.col(j) = draw_mean + rmvnorm(L_post);
     }
     return result;
