@@ -178,21 +178,33 @@ Rcpp::List gpirtMCMC(const arma::cube& y, arma::mat theta,
         // Draw new parameter values
         f      = draw_f(f, theta, y, cholS, mu, thresholds, constant_IRF);
         f_star = draw_fstar(f, theta, theta_star, cholS, mu_star, constant_IRF);
+        // align fstar with first one
+        // for(arma::uword h = 0; h < horizon; ++h){
+        //     for(arma::uword j = 0; j < m; ++j){
+        //         arma::mat tmp = sign(arma::cor(f_star.slice(h).col(j), new_f_star.slice(h).col(j)));
+        //         f_star.slice(h).col(j) = new_f_star.slice(h).col(j)*tmp(0,0);
+        //     }
+        // }
+
         theta  = draw_theta(theta_star, y, theta_prior, f_star, \
                               mu_star, thresholds, theta_os, theta_ls);
+
+        // update X from theta
+        X.col(1) = theta;
+
         // Update f for new theta
         arma::mat idx = (theta+5)/0.01;
         for (arma::uword k = 0; k < n; ++k){
             for (arma::uword h = 0; h < horizon; ++h){
-                f.slice(h).row(k) = f_star.slice(h).row(int(idx(k, h)));
+                f.slice(h).row(k) = f_star.slice(h).row(round(idx(k, h)));
             }
         }
 
-        // set up S, mu, cholS from theta
-        X.col(1) = theta;
+        // draw beta
         beta = draw_beta(beta, X, y, f, beta_prior_means, \
                      beta_prior_sds, beta_step_sizes, thresholds);
 
+        // update up S, mu, cholS from theta/beta
         for (arma::uword h = 0; h < horizon; h++){
             mu.slice(h) = X.slice(h) * beta.slice(h);
             mu_star.slice(h) = Xstar * beta.slice(h);
@@ -209,8 +221,11 @@ Rcpp::List gpirtMCMC(const arma::cube& y, arma::mat theta,
             //         X.slice(h).t(), "lower");
             cholS.slice(h) = arma::chol(S.slice(h), "lower");
         }
-        
+
+        // draw thresholds
         thresholds = draw_threshold(thresholds, y, f, mu);
+
+        // compute current log likelihood
         double ll = 0;
         for (arma::uword h = 0; h < horizon; h++){
             for (arma::uword j = 0; j < m; j++)

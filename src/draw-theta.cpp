@@ -15,8 +15,8 @@ inline double compute_ll(const double nu,
         theta_index=1001;
     }
     
-    arma::rowvec f = fstar.row(theta_index);
     arma::rowvec mu = mu_star.row(theta_index);
+    arma::rowvec f = fstar.row(theta_index);
     
     // compute log likelihood
     return ll_bar(f.t(), y, mu.t(), thresholds);
@@ -152,7 +152,7 @@ arma::mat draw_theta(const arma::vec& theta_star,
         }
     }else{
         V              = K_time(ts, ts, os, ls);
-        V.diag()       += 1e-4;
+        V.diag()       += 1e-6;
         arma::mat L    = arma::chol(V, "lower");
         // Iterate each respondents
         for ( arma::uword i = 0; i < n; ++i ){
