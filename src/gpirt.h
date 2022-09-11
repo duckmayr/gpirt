@@ -19,7 +19,7 @@ arma::cube draw_fstar(const arma::cube& f,
 
 // Function to draw theta
 arma::mat draw_theta(const arma::vec& theta_star,
-                     const arma::cube& y, const arma::vec& theta_prior,
+                     const arma::cube& y, const arma::mat& theta,
                      const arma::cube& fstar, const arma::cube& mu_star,
                      const arma::vec& thresholds,
                      const double& os,

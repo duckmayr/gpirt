@@ -186,7 +186,7 @@ Rcpp::List gpirtMCMC(const arma::cube& y, arma::mat theta,
         //     }
         // }
 
-        theta  = draw_theta(theta_star, y, theta_prior, f_star, \
+        theta  = draw_theta(theta_star, y, theta, f_star, \
                               mu_star, thresholds, theta_os, theta_ls);
 
         // update X from theta
