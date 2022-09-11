@@ -127,7 +127,7 @@ arma::mat draw_theta(const arma::vec& theta_star,
             y_.col(0) = y_constant.col(i);
             fstar_.slice(0) = f_constant.t();
             mu_star_.slice(0) = mu_constant.t();
-            arma::vec raw_theta_ess = draw_theta_ess(theta.row(i).t(), y_, \
+            arma::vec raw_theta_ess = draw_theta_ess(arma::vec(1, arma::fill::value(theta(i,0))), y_, \
                         arma::chol(V, "lower"), fstar_, mu_star_, thresholds);
             for ( arma::uword h = 0; h < horizon; ++h ){
                 result(i, h) = theta_star[round((raw_theta_ess(0)+5)/0.01)];
@@ -135,7 +135,7 @@ arma::mat draw_theta(const arma::vec& theta_star,
         }
     }else if(ls<=0.1){
         // RDM: independent theta
-        V.eye(1, 1);
+        V.ones(1, 1);
         for ( arma::uword i = 0; i < n; ++i ){
             // round up theta to nearest fine grid
             for ( arma::uword h = 0; h < horizon; ++h ){
