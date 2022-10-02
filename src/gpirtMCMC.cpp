@@ -30,14 +30,14 @@ Rcpp::List gpirtMCMC(const arma::cube& y, arma::mat theta,
                      const arma::mat& beta_step_sizes,
                      const double& theta_os,
                      const double& theta_ls,
-                     arma::vec thresholds,
+                     arma::cube thresholds,
                      const int constant_IRF) {
 
     // Bookkeeping variables
     arma::uword n = y.n_rows;
     arma::uword m = y.n_cols;
     arma::uword horizon = y.n_slices;
-    arma::uword C = thresholds.n_elem - 1;
+    // arma::uword C = thresholds.n_slices - 1;
     int total_iterations = sample_iterations + burn_iterations;
 
     // Draw initial values of theta, f, and beta
@@ -158,7 +158,7 @@ Rcpp::List gpirtMCMC(const arma::cube& y, arma::mat theta,
     arma::field<arma::cube> beta_draws(int(sample_iterations/THIN));
     arma::field<arma::cube> f_draws(int(sample_iterations/THIN));
     arma::field<arma::cube> fstar_draws(int(sample_iterations/THIN));
-    arma::mat               threshold_draws(int(sample_iterations/THIN), C + 1);
+    arma::field<arma::cube> threshold_draws(int(sample_iterations/THIN));
     arma::vec               ll_draws(int(sample_iterations/THIN));
 
     // Information for progress bar:
@@ -185,7 +185,6 @@ Rcpp::List gpirtMCMC(const arma::cube& y, arma::mat theta,
         //         f_star.slice(h).col(j) = new_f_star.slice(h).col(j)*tmp(0,0);
         //     }
         // }
-
         theta  = draw_theta(theta_star, y, theta, f_star, \
                               mu_star, thresholds, theta_os, theta_ls);
 
@@ -199,7 +198,6 @@ Rcpp::List gpirtMCMC(const arma::cube& y, arma::mat theta,
                 f.slice(h).row(k) = f_star.slice(h).row(round(idx(k, h)));
             }
         }
-
         // draw beta
         beta = draw_beta(beta, X, y, f, beta_prior_means, \
                      beta_prior_sds, beta_step_sizes, thresholds);
@@ -223,15 +221,15 @@ Rcpp::List gpirtMCMC(const arma::cube& y, arma::mat theta,
         }
 
         // draw thresholds
-        thresholds = draw_threshold(thresholds, y, f, mu);
-
+        thresholds = draw_threshold(thresholds, y, f, mu, constant_IRF);
+        
         // compute current log likelihood
         double ll = 0;
         for (arma::uword h = 0; h < horizon; h++){
             for (arma::uword j = 0; j < m; j++)
             {
                 ll += ll_bar(f.slice(h).col(j), y.slice(h).col(j),
-                                      mu.slice(h).col(j), thresholds);
+                                      mu.slice(h).col(j), thresholds.slice(h).row(j).t());
             }
         }
 
@@ -241,7 +239,7 @@ Rcpp::List gpirtMCMC(const arma::cube& y, arma::mat theta,
             theta_draws.row(store_idx)     = theta;
             f_draws[store_idx]             = f;
             beta_draws[store_idx]          = beta;
-            threshold_draws.row(store_idx) = thresholds.t();
+            threshold_draws[store_idx]     = thresholds;
             fstar_draws[store_idx]         = f_star;
             ll_draws[store_idx]            = ll;
         }

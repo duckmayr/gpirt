@@ -5,7 +5,7 @@ inline double compute_ll(const double theta,
                      const arma::vec& y,
                      const arma::mat& fstar,
                      const arma::mat& mu_star,
-                     const arma::vec& thresholds){
+                     const arma::mat& thresholds){
     // round nu to the nearest index grid
     int theta_index = round((theta+5)/0.01);
     if(theta_index<0){
@@ -19,7 +19,7 @@ inline double compute_ll(const double theta,
     arma::rowvec f = fstar.row(theta_index);
     
     // compute log likelihood
-    return ll_bar(f.t(), y, mu.t(), thresholds);
+    return ll(f.t()+mu.t(), y, thresholds);
 }
 
 inline arma::vec draw_theta_ess(const arma::vec& theta,
@@ -27,7 +27,7 @@ inline arma::vec draw_theta_ess(const arma::vec& theta,
                      const arma::mat& L,
                      const arma::cube& fstar,
                      const arma::cube& mu_star,
-                     const arma::vec& thresholds){
+                     const arma::cube& thresholds){
     arma::uword horizon = y.n_cols;
 
     // First we draw "an ellipse" -- a vector drawn from a multivariate
@@ -39,7 +39,7 @@ inline arma::vec draw_theta_ess(const arma::vec& theta,
     for (arma::uword h = 0; h < horizon; h++)
     {
         log_y += compute_ll(theta(h), y.col(h), fstar.slice(h),\
-                     mu_star.slice(h), thresholds);
+                     mu_star.slice(h), thresholds.slice(h));
     }
 
     // For our while loop condition:
@@ -64,7 +64,7 @@ inline arma::vec draw_theta_ess(const arma::vec& theta,
         for (arma::uword h = 0; h < horizon; h++)
         {
             log_y_prime += compute_ll(theta_prime(h), y.col(h),\
-                         fstar.slice(h), mu_star.slice(h), thresholds);
+                         fstar.slice(h), mu_star.slice(h), thresholds.slice(h));
         }
 
         if ( log_y_prime > log_y ) {
@@ -87,7 +87,7 @@ inline arma::vec draw_theta_ess(const arma::vec& theta,
 arma::mat draw_theta(const arma::vec& theta_star,
                      const arma::cube& y, const arma::mat& theta,
                      const arma::cube& fstar, const arma::cube& mu_star,
-                     const arma::vec& thresholds,
+                     const arma::cube& thresholds,
                      const double& os,
                      const double& ls) {
 

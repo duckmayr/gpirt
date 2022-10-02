@@ -86,12 +86,32 @@ arma::vec ess_threshold(const arma::vec& delta, const arma::cube& f,
 
 // Function to draw thresholds
 
-arma::vec draw_threshold(const arma::vec& thresholds, const arma::cube& y,
-                    const arma::cube& f, const arma::cube& mu){
-    arma::uword C = thresholds.n_elem - 1;
-    arma::vec thresholds_prime(C+1, arma::fill::zeros);
-    arma::vec delta = threshold_to_delta(thresholds);
-    arma::vec delta_prime = ess_threshold(delta, f, y, mu);
-    thresholds_prime = delta_to_threshold(delta_prime);
+arma::cube draw_threshold(const arma::cube& thresholds, const arma::cube& y,
+                    const arma::cube& f, const arma::cube& mu, const int constant_IRF){
+    arma::uword m = thresholds.n_rows;
+    arma::uword C = thresholds.n_cols - 1;
+    arma::uword horizon = thresholds.n_slices;
+    arma::cube thresholds_prime(m, C+1, horizon, arma::fill::zeros);
+    if(constant_IRF==1){
+        for ( arma::uword j = 0; j < m; ++j ){
+            arma::vec delta = threshold_to_delta(thresholds.slice(0).row(j).t());
+            arma::vec delta_prime = ess_threshold(delta, f, y, mu);
+            thresholds_prime.slice(0).row(j) = delta_to_threshold(delta_prime).t();
+            for(arma::uword h = 1; h < horizon; ++h){
+                thresholds_prime.slice(h).row(j) = thresholds_prime.slice(0).row(j);
+            }
+        }
+    }
+    else{
+        for ( arma::uword h = 0; h < horizon; ++h){
+            for ( arma::uword j = 0; j < m; ++j ){
+                arma::vec delta = threshold_to_delta(thresholds.slice(h).row(j).t());
+                arma::vec delta_prime = ess_threshold(delta, f, y, mu);
+                thresholds_prime.slice(h).row(j) = delta_to_threshold(delta_prime).t();
+            }
+        }
+        
+    }
+    
     return thresholds_prime;
 }

@@ -63,19 +63,19 @@ arma::vec ess(const arma::vec& f, const arma::vec& y, const arma::mat& cholS,
 // Function to draw f
 
 inline arma::mat draw_f_(const arma::mat& f, const arma::mat& y, const arma::mat& cholS,
-                 const arma::mat& mu, const arma::vec& thresholds) {
+                 const arma::mat& mu, const arma::mat& thresholds) {
     // draw f for one horizon
     arma::uword n = f.n_rows;
     arma::uword m = f.n_cols;
     arma::mat result(n, m);
     for ( arma::uword j = 0; j < m; ++j) {
-        result.col(j) = ess(f.col(j), y.col(j), cholS, mu.col(j), thresholds);
+        result.col(j) = ess(f.col(j), y.col(j), cholS, mu.col(j), thresholds.row(j).t());
     }
     return result;
 }
 
 arma::cube draw_f(const arma::cube& f, const arma::mat& theta, const arma::cube& y, const arma::cube& cholS,
-                 const arma::cube& mu, const arma::vec& thresholds, const int constant_IRF) {
+                 const arma::cube& mu, const arma::cube& thresholds, const int constant_IRF) {
     arma::uword n = f.n_rows;
     arma::uword m = f.n_cols;
     arma::uword horizon = f.n_slices;
@@ -85,7 +85,7 @@ arma::cube draw_f(const arma::cube& f, const arma::mat& theta, const arma::cube&
         // draw f separately for non-constant IRF
         for ( arma::uword h = 0; h < horizon; ++h){
             result.slice(h) = draw_f_(f.slice(h), y.slice(h), cholS.slice(h),\
-                            mu.slice(h), thresholds);
+                            mu.slice(h), thresholds.slice(h));
         }
     }
     else{
@@ -118,7 +118,7 @@ arma::cube draw_f(const arma::cube& f, const arma::mat& theta, const arma::cube&
                         X_constant*arma::diagmat(square(beta_prior_sds))* \
                         X_constant.t(), "lower");
         arma::mat f_prime(n*horizon, m);
-        f_prime = draw_f_(f_constant, y_constant, L_constant, mu_constant, thresholds);
+        f_prime = draw_f_(f_constant, y_constant, L_constant, mu_constant, thresholds.slice(0));
 
         // store the same fstar in the result object for all horizons
         for ( arma::uword h = 0; h < horizon; ++h ){

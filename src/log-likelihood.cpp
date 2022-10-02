@@ -45,17 +45,17 @@
  * Phi(z) &= \int_{-\infty}^z N(x;0,1) dx \end{align*}
  */
 
-double ll(const arma::vec& f, const arma::vec& y, const arma::vec& thresholds) {
+double ll(const arma::vec& f, const arma::vec& y, const arma::mat& thresholds) {
     // each respondent for all items
-    arma::uword n = f.n_elem;
+    arma::uword m = f.n_elem;
     double result = 0.0;
-    for ( arma::uword j = 0; j < n; ++j ) {
+    for ( arma::uword j = 0; j < m; ++j ) {
         if ( std::isnan(y[j]) ) {
             continue;
         }
         int c = int(y[j]);
-        double z1 = thresholds[c-1] - f[j];
-        double z2 = thresholds[c] - f[j];
+        double z1 = thresholds(j, c-1) - f[j];
+        double z2 = thresholds(j, c) - f[j];
         result += std::log(R::pnorm(z2, 0, 1, 1, 0)-R::pnorm(z1, 0, 1, 1, 0)+1e-6);
     }
     return result;

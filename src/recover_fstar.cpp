@@ -10,7 +10,7 @@ Rcpp::List recover_fstar(int seed,
                          const arma::cube& y,
                          const arma::mat& theta,
                          const arma::cube& beta,
-                         const arma::vec& thresholds,
+                         const arma::cube& thresholds,
                          const arma::mat& beta_prior_means,
                          const arma::mat& beta_prior_sds,
                          const int constant_IRF){

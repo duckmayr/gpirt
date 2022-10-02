@@ -94,7 +94,7 @@ inline arma::vec draw_beta_ess(const arma::vec& beta,
 arma::cube draw_beta(arma::cube& beta, const arma::cube& X,
                     const arma::cube& y, const arma::cube& f,
                     const arma::mat& prior_means, const arma::mat& prior_sds,
-                    const arma::mat& step_sizes, const arma::vec& thresholds) {
+                    const arma::mat& step_sizes, const arma::cube& thresholds) {
     // Bookkeeping variables
     arma::uword p = beta.n_rows; // # of mean function variables (2 for now)
     arma::uword m = beta.n_cols; // # of response functions we are learning
@@ -110,7 +110,7 @@ arma::cube draw_beta(arma::cube& beta, const arma::cube& X,
             cholS.diag() = prior_sds.col(j);
             cholS = arma::chol(arma::powmat(cholS,2), "lower");
             result.slice(h).col(j) = draw_beta_ess(beta.slice(h).col(j),\
-             f.slice(h).col(j), y.slice(h).col(j), cholS, X.slice(h), thresholds);
+             f.slice(h).col(j), y.slice(h).col(j), cholS, X.slice(h), thresholds.slice(h).row(j).t());
         }
 
     }
