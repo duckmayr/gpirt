@@ -27,7 +27,8 @@ Rcpp::List gpirtMCMC(const arma::cube& y, arma::mat theta,
                      const int THIN,
                      const arma::mat& beta_prior_means,
                      const arma::mat& beta_prior_sds,
-                     const arma::mat& beta_step_sizes,
+                     const arma::mat& theta_prior_means,
+                     const arma::mat& theta_prior_sds,
                      const double& theta_os,
                      const double& theta_ls,
                      arma::cube thresholds,
@@ -40,20 +41,24 @@ Rcpp::List gpirtMCMC(const arma::cube& y, arma::mat theta,
     // arma::uword C = thresholds.n_slices - 1;
     int total_iterations = sample_iterations + burn_iterations;
 
+    // clamp theta
+    theta.clamp(-5.0, 5.0);
+
     // Draw initial values of theta, f, and beta
     arma::mat mean_zeros = arma::zeros<arma::mat>(n, horizon);
     arma::cube S = arma::zeros<arma::cube>(n, n, horizon);
     for (arma::uword h = 0; h < horizon; h++)
     {
-        S.slice(h) = K(theta.col(h), theta.col(h));
+        S.slice(h) = K(theta.col(h), theta.col(h), beta_prior_sds.col(0));
         S.slice(h).diag() += 1e-6;
     }
-    arma::cube X(n, 2, horizon);
+    arma::cube X(n, 3, horizon);
     X.col(0) = arma::ones<arma::mat>(n, horizon);
     X.col(1) = theta;
+    X.col(2) = arma::pow(theta,2);
     arma::cube f(n, m, horizon);
     arma::cube cholS(n, n, horizon);
-    arma::cube beta(2, m, horizon);
+    arma::cube beta(3, m, horizon);
 
     // We need to have a matrix with a column of ones and a column of theta
     // for generating the linear mean
@@ -65,9 +70,9 @@ Rcpp::List gpirtMCMC(const arma::cube& y, arma::mat theta,
         // set up mean
         for(arma::uword h = 0; h < horizon; ++h){
             for ( arma::uword j = 0; j < m; ++j ) {
-                for ( arma::uword p = 0; p < 2; ++p ) {
-                    beta.slice(h).col(j).row(p) = R::rnorm(beta_prior_means(p, j), beta_prior_sds(p, j));
-                    // beta.slice(h).col(j).row(p) = 0;
+                for ( arma::uword p = 0; p < 3; ++p ) {
+                    // beta.slice(h).col(j).row(p) = R::rnorm(beta_prior_means(p, j), beta_prior_sds(p, j));
+                    beta.slice(h).col(j).row(p) = 0;
                 }
                 mu.slice(h) = X.slice(h) * beta.slice(h);
             }
@@ -91,12 +96,13 @@ Rcpp::List gpirtMCMC(const arma::cube& y, arma::mat theta,
         }
 
         // Set up X
-        arma::mat X_constant(n*horizon, 2);
+        arma::mat X_constant(n*horizon, 3);
         X_constant.col(0) = arma::ones<arma::vec>(n*horizon);
         X_constant.col(1) = theta_constant;
+        X_constant.col(2) = arma::pow(theta_constant,2);
         // Set up S
         arma::mat S_constant = arma::zeros<arma::mat>(n*horizon, n*horizon);
-        S_constant = K(theta_constant, theta_constant);
+        S_constant = K(theta_constant, theta_constant, beta_prior_sds.col(0));
         S_constant.diag() += 1e-6;
 
         // Set up cholS/f
@@ -109,9 +115,9 @@ Rcpp::List gpirtMCMC(const arma::cube& y, arma::mat theta,
         // set up mean
         arma::mat mu_constant(n*horizon, m);
         for ( arma::uword j = 0; j < m; ++j ) {
-            for ( arma::uword p = 0; p < 2; ++p ) {
-                beta.slice(0).col(j).row(p) = R::rnorm(beta_prior_means(p, j), beta_prior_sds(p, j));
-                // beta.slice(0).col(j).row(p) = 0;
+            for ( arma::uword p = 0; p < 3; ++p ) {
+                // beta.slice(0).col(j).row(p) = R::rnorm(beta_prior_means(p, j), beta_prior_sds(p, j));
+                beta.slice(0).col(j).row(p) = 0;
             }
         }
         mu_constant = X_constant * beta.slice(0);
@@ -137,21 +143,16 @@ Rcpp::List gpirtMCMC(const arma::cube& y, arma::mat theta,
     // Setup theta_star grid
     arma::vec theta_star = arma::regspace<arma::vec>(-5.0, 0.01, 5.0);
     arma::uword N = theta_star.n_elem;
-    arma::mat Xstar(N, 2);
+    arma::mat Xstar(N, 3);
     Xstar.col(0) = arma::ones<arma::vec>(N);
     Xstar.col(1) = theta_star;
+    Xstar.col(2) = arma::pow(theta_star,2);
     arma::cube mu_star(N, m, horizon);
     for (arma::uword h = 0; h < horizon; h++){
         mu_star.slice(h) = Xstar * beta.slice(h);
     }
      
-    arma::cube f_star = draw_fstar(f, theta, theta_star, cholS, mu_star, constant_IRF);
-    
-    // The prior probabilities for theta_star doesn't change between iterations
-    arma::vec theta_prior(N);
-    for ( arma::uword i = 0; i < N; ++i ) {
-        theta_prior[i] = R::dnorm(theta_star[i], 0.0, 1.0, 1);
-    }
+    arma::cube f_star = draw_fstar(f, theta, theta_star, beta_prior_sds,cholS, mu_star, constant_IRF);
 
     // Setup results storage
     arma::cube              theta_draws(int(sample_iterations/THIN), n, y.n_slices);
@@ -176,20 +177,13 @@ Rcpp::List gpirtMCMC(const arma::cube& y, arma::mat theta,
         set_seed(iter);
 
         // Draw new parameter values
-        f      = draw_f(f, theta, y, cholS, mu, thresholds, constant_IRF);
-        f_star = draw_fstar(f, theta, theta_star, cholS, mu_star, constant_IRF);
-        // align fstar with first one
-        // for(arma::uword h = 0; h < horizon; ++h){
-        //     for(arma::uword j = 0; j < m; ++j){
-        //         arma::mat tmp = sign(arma::cor(f_star.slice(h).col(j), new_f_star.slice(h).col(j)));
-        //         f_star.slice(h).col(j) = new_f_star.slice(h).col(j)*tmp(0,0);
-        //     }
-        // }
-        theta  = draw_theta(theta_star, y, theta, f_star, \
+        f      = draw_f(f, theta, y, cholS, beta_prior_sds, mu, thresholds, constant_IRF);
+        f_star = draw_fstar(f, theta, theta_star,beta_prior_sds, cholS, mu_star, constant_IRF);
+        theta  = draw_theta(theta_star, y, theta, theta_prior_sds, f_star, \
                               mu_star, thresholds, theta_os, theta_ls);
-
         // update X from theta
         X.col(1) = theta;
+        X.col(2) = arma::pow(theta, 2);
 
         // Update f for new theta
         arma::mat idx = (theta+5)/0.01;
@@ -199,8 +193,8 @@ Rcpp::List gpirtMCMC(const arma::cube& y, arma::mat theta,
             }
         }
         // draw beta
-        beta = draw_beta(beta, X, y, f, beta_prior_means, \
-                     beta_prior_sds, beta_step_sizes, thresholds);
+        // beta = draw_beta(beta, X, y, f, beta_prior_means, \
+        //              beta_prior_sds, beta_step_sizes, thresholds);
 
         // update up S, mu, cholS from theta/beta
         for (arma::uword h = 0; h < horizon; h++){
@@ -209,7 +203,7 @@ Rcpp::List gpirtMCMC(const arma::cube& y, arma::mat theta,
         }
         for (arma::uword h = 0; h < horizon; h++)
         {
-            S.slice(h) = K(theta.col(h), theta.col(h));
+            S.slice(h) = K(theta.col(h), theta.col(h), beta_prior_sds.col(0));
             S.slice(h).diag() += 1e-6;
         }
 

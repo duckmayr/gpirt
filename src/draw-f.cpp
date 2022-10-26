@@ -75,7 +75,7 @@ inline arma::mat draw_f_(const arma::mat& f, const arma::mat& y, const arma::mat
 }
 
 arma::cube draw_f(const arma::cube& f, const arma::mat& theta, const arma::cube& y, const arma::cube& cholS,
-                 const arma::cube& mu, const arma::cube& thresholds, const int constant_IRF) {
+             const arma::mat& beta_prior_sds, const arma::cube& mu, const arma::cube& thresholds, const int constant_IRF) {
     arma::uword n = f.n_rows;
     arma::uword m = f.n_cols;
     arma::uword horizon = f.n_slices;
@@ -104,19 +104,21 @@ arma::cube draw_f(const arma::cube& f, const arma::mat& theta, const arma::cube&
             }
         }
         // Set up X
-        arma::mat X_constant(n*horizon, 2);
+        arma::mat X_constant(n*horizon, 3);
         X_constant.col(0) = arma::ones<arma::vec>(n*horizon);
         X_constant.col(1) = theta_constant;
+        X_constant.col(2) = arma::pow(theta_constant, 2);
         // Set up S
         arma::mat S_constant = arma::zeros<arma::mat>(n*horizon, n*horizon);
-        S_constant = K(theta_constant, theta_constant);
+        S_constant = K(theta_constant, theta_constant, beta_prior_sds.col(0));
         S_constant.diag() += 1e-6;
         // Set up L
-        arma::vec beta_prior_sds = 0.5*arma::ones<arma::vec>(2);
+        // arma::vec beta_prior_sds = 3*arma::ones<arma::vec>(3);
         arma::mat L_constant(n*horizon, n*horizon);
-        L_constant = arma::chol(S_constant + \
-                        X_constant*arma::diagmat(square(beta_prior_sds))* \
-                        X_constant.t(), "lower");
+        // L_constant = arma::chol(S_constant + \
+        //                 X_constant*arma::diagmat(square(beta_prior_sds))* \
+        //                 X_constant.t(), "lower");
+        L_constant = arma::chol(S_constant, "lower");
         arma::mat f_prime(n*horizon, m);
         f_prime = draw_f_(f_constant, y_constant, L_constant, mu_constant, thresholds.slice(0));
 

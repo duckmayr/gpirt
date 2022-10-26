@@ -24,9 +24,10 @@
 #' @param beta_prior_sds A numeric matrix of with \code{ncol(data)} columns
 #'   and two rows giving the prior standard deviations for the items' linear
 #'   means' intercept and slope; by default, a matrix of threes
-#' @param beta_proposal_sds A numeric matrix of with \code{ncol(data)} columns
-#'   and two rows giving the standard deviations for proposals for the items'
-#'   linear means' intercept and slope; by default a matrix filled with 0.1
+#' @param theta_prior_means A numeric  matrix of with \code{ncol(data)} columns
+#' giving the prior mean of theta by default, a  matrix of zeros
+#' @param theta_prior_sds A numeric  matrix of with \code{ncol(data)} columns
+#'  giving sd of prior variance constant theta; by default, a  matrix of ones
 #' @param theta_os A numeric value giving output scale of dynamic ability GP model
 #' @param theta_ls A numeric value giving length scale of dynamic ability GP model
 #' @param theta_init A vector of length \code{nrow(data)} giving initial values
@@ -98,9 +99,10 @@ gpirtMCMC <- function(data, sample_iterations, burn_iterations,
                       THIN=1, CHAIN=1,
                       vote_codes = list(yea = 1:3, nay = 4:6,
                                         missing = c(0, 7:9, NA)),
-                      beta_prior_means = matrix(0, nrow = 2, ncol = ncol(data)),
-                      beta_prior_sds = matrix(3, nrow = 2, ncol = ncol(data)),
-                      beta_proposal_sds = matrix(0.1, nrow = 2, ncol = ncol(data)),
+                      beta_prior_means = matrix(0, nrow = 3, ncol = ncol(data)),
+                      beta_prior_sds = matrix(3, nrow = 3, ncol = ncol(data)),
+                      theta_prior_means = matrix(0, nrow = 2, ncol = nrow(data)),
+                      theta_prior_sds = matrix(1, nrow = 2, ncol = nrow(data)),
                       theta_os = 1, theta_ls = 10,
                       theta_init = NULL, thresholds = NULL, SEED=1, constant_IRF=0) {
     # Setup result list for multiple chains
@@ -117,12 +119,16 @@ gpirtMCMC <- function(data, sample_iterations, burn_iterations,
         if ( is.null(theta_init) ) {
             # initial theta as # of respondents by # of sessions
             theta_init <- matrix(0, nrow=nrow(data), ncol=dim(data)[3])
-            theta_init[,1] <- rnorm(nrow(data))
+            for(i in 1:nrow(data)){
+                theta_init[i,1] <- rnorm(1, theta_prior_means[1,i],theta_prior_sds[1,i])
+            }
+            
             if(dim(data)[3]>=2){
                 for(h in 2:dim(data)[3]){
                         theta_init[,h] <- theta_init[,1]
                 }
             }
+            
         }
 
         # Now we make sure we have initial values for thresholds
@@ -149,7 +155,8 @@ gpirtMCMC <- function(data, sample_iterations, burn_iterations,
         # Now we can call the C++ sampler function
         result[[chain]] <- .gpirtMCMC(
             data, theta_init, sample_iterations, burn_iterations, THIN,
-            beta_prior_means, beta_prior_sds,beta_proposal_sds,
+            beta_prior_means, beta_prior_sds,
+            theta_prior_means, theta_prior_sds,
             theta_os, theta_ls, thresholds, constant_IRF
         )
     }

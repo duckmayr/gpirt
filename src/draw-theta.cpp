@@ -86,6 +86,7 @@ inline arma::vec draw_theta_ess(const arma::vec& theta,
 
 arma::mat draw_theta(const arma::vec& theta_star,
                      const arma::cube& y, const arma::mat& theta,
+                     const arma::mat& theta_prior_sds,
                      const arma::cube& fstar, const arma::cube& mu_star,
                      const arma::cube& thresholds,
                      const double& os,
@@ -128,7 +129,7 @@ arma::mat draw_theta(const arma::vec& theta_star,
             fstar_.slice(0) = f_constant.t();
             mu_star_.slice(0) = mu_constant.t();
             arma::vec raw_theta_ess = draw_theta_ess(arma::vec(1, arma::fill::value(theta(i,0))), y_, \
-                        arma::chol(V, "lower"), fstar_, mu_star_, thresholds);
+                        arma::chol(V+std::pow(theta_prior_sds(0,i),2), "lower"), fstar_, mu_star_, thresholds);
             for ( arma::uword h = 0; h < horizon; ++h ){
                 result(i, h) = theta_star[round((raw_theta_ess(0)+5)/0.01)];
             }
@@ -146,16 +147,16 @@ arma::mat draw_theta(const arma::vec& theta_star,
                 fstar_.slice(0) = fstar.slice(h);
                 mu_star_.slice(0) = mu_star.slice(h);
                 arma::vec raw_theta_ess = draw_theta_ess(arma::vec(1, arma::fill::value(theta(i,h))),\
-                       y_, arma::chol(V, "lower"), fstar_, mu_star_, thresholds);
+                       y_, arma::chol(V+std::pow(theta_prior_sds(0,i),2), "lower"), fstar_, mu_star_, thresholds);
                 result(i, h) = theta_star[round((raw_theta_ess(0)+5)/0.01)];
             }
         }
     }else{
-        V              = K_time(ts, ts, os, ls);
-        V.diag()       += 1e-6;
-        arma::mat L    = arma::chol(V, "lower");
         // Iterate each respondents
         for ( arma::uword i = 0; i < n; ++i ){
+            V              = K_time(ts, ts, os, ls, theta_prior_sds.col(i));
+            // V.diag()       += 1e-6;
+            arma::mat L    = arma::chol(V, "lower");
             // draw dynamic theta using ess
             arma::vec raw_theta_ess = draw_theta_ess(theta.row(i).t(), y.row(i), L, fstar, mu_star, thresholds);
             // round up theta to nearest fine grid

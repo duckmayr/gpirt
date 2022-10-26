@@ -7,12 +7,13 @@ Rcpp::NumericVector get_seed_state();
 
 // Function to draw f
 arma::cube draw_f(const arma::cube& f, const arma::mat& theta, const arma::cube& y, const arma::cube& cholS,
-                 const arma::cube& mu, const arma::cube& thresholds, const int constant_IRF);
+            const arma::mat& beta_prior_sds, const arma::cube& mu, const arma::cube& thresholds, const int constant_IRF);
 
 // Function to draw fstar
 arma::cube draw_fstar(const arma::cube& f, 
                       const arma::mat& theta,
                       const arma::vec& theta_star, 
+                      const arma::mat& beta_prior_sds,
                       const arma::cube& L,
                       const arma::cube& mu_star,
                       const int constant_IRF);
@@ -20,16 +21,19 @@ arma::cube draw_fstar(const arma::cube& f,
 // Function to draw theta
 arma::mat draw_theta(const arma::vec& theta_star,
                      const arma::cube& y, const arma::mat& theta,
+                     const arma::mat& theta_prior_sds,
                      const arma::cube& fstar, const arma::cube& mu_star,
                      const arma::cube& thresholds,
                      const double& os,
                      const double& ls);
 
-arma::mat draw_theta_f(const arma::cube& y,
-                     const arma::cube& f, const arma::mat& theta,
+arma::vec draw_theta_0(const arma::vec& theta_star,
+                     const arma::cube& y, const arma::mat& theta,
+                     const arma::cube& fstar, const arma::cube& mu_star,
                      const arma::cube& thresholds,
-                     const double& os,
-                     const double& ls);
+                     const arma::vec& theta_prior_means,
+                     const arma::vec& theta_prior_sds,
+                     const arma::vec& theta_step_sizes);
 
 // Function to draw beta
 arma::cube draw_beta(arma::cube& beta, const arma::cube& X,
@@ -42,9 +46,10 @@ arma::cube draw_threshold(const arma::cube& thresholds, const arma::cube& y,
                     const arma::cube& f, const arma::cube& mu, const int constant_IRF);
 
 // Covariance function
-arma::mat K(const arma::vec& x1, const arma::vec& x2);
+arma::mat K(const arma::vec& x1, const arma::vec& x2, const arma::vec& beta_prior_sds);
 arma::mat K_time(const arma::vec& x1, const arma::vec& x2,
-                 const double& os, const double& ls);
+                 const double& os, const double& ls,
+                 const arma::vec& theta_prior_sds);
 
 // Likelihood function
 // double ll(const arma::vec& f, const arma::vec& y);

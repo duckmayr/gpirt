@@ -22,7 +22,7 @@ Rcpp::List recover_fstar(int seed,
     arma::cube S = arma::zeros<arma::cube>(n, n, horizon);
     for (arma::uword h = 0; h < horizon; h++)
     {
-        S.slice(h) = K(theta.col(h), theta.col(h));
+        S.slice(h) = K(theta.col(h), theta.col(h),beta_prior_sds.col(0));
         S.slice(h).diag() += 1e-6;
     }
 
@@ -60,8 +60,8 @@ Rcpp::List recover_fstar(int seed,
     }
     // restore seed
     set_seed(seed);
-    f = draw_f(f, theta, y, cholS, mu, thresholds, constant_IRF);
-    arma::cube f_star = draw_fstar(f, theta, theta_star, cholS, mu_star, constant_IRF);
+    f = draw_f(f, theta, y, cholS,beta_prior_sds, mu, thresholds, constant_IRF);
+    arma::cube f_star = draw_fstar(f, theta, theta_star,beta_prior_sds, cholS,  mu_star, constant_IRF);
     Rcpp::List result = Rcpp::List::create(Rcpp::Named("fstar", f_star));
 
     return result;

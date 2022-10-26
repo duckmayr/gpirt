@@ -12,8 +12,8 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // gpirtMCMC
-Rcpp::List gpirtMCMC(const arma::cube& y, arma::mat theta, const int sample_iterations, const int burn_iterations, const int THIN, const arma::mat& beta_prior_means, const arma::mat& beta_prior_sds, const arma::mat& beta_step_sizes, const double& theta_os, const double& theta_ls, arma::cube thresholds, const int constant_IRF);
-RcppExport SEXP _gpirt_gpirtMCMC(SEXP ySEXP, SEXP thetaSEXP, SEXP sample_iterationsSEXP, SEXP burn_iterationsSEXP, SEXP THINSEXP, SEXP beta_prior_meansSEXP, SEXP beta_prior_sdsSEXP, SEXP beta_step_sizesSEXP, SEXP theta_osSEXP, SEXP theta_lsSEXP, SEXP thresholdsSEXP, SEXP constant_IRFSEXP) {
+Rcpp::List gpirtMCMC(const arma::cube& y, arma::mat theta, const int sample_iterations, const int burn_iterations, const int THIN, const arma::mat& beta_prior_means, const arma::mat& beta_prior_sds, const arma::mat& theta_prior_means, const arma::mat& theta_prior_sds, const double& theta_os, const double& theta_ls, arma::cube thresholds, const int constant_IRF);
+RcppExport SEXP _gpirt_gpirtMCMC(SEXP ySEXP, SEXP thetaSEXP, SEXP sample_iterationsSEXP, SEXP burn_iterationsSEXP, SEXP THINSEXP, SEXP beta_prior_meansSEXP, SEXP beta_prior_sdsSEXP, SEXP theta_prior_meansSEXP, SEXP theta_prior_sdsSEXP, SEXP theta_osSEXP, SEXP theta_lsSEXP, SEXP thresholdsSEXP, SEXP constant_IRFSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -24,12 +24,13 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const int >::type THIN(THINSEXP);
     Rcpp::traits::input_parameter< const arma::mat& >::type beta_prior_means(beta_prior_meansSEXP);
     Rcpp::traits::input_parameter< const arma::mat& >::type beta_prior_sds(beta_prior_sdsSEXP);
-    Rcpp::traits::input_parameter< const arma::mat& >::type beta_step_sizes(beta_step_sizesSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type theta_prior_means(theta_prior_meansSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type theta_prior_sds(theta_prior_sdsSEXP);
     Rcpp::traits::input_parameter< const double& >::type theta_os(theta_osSEXP);
     Rcpp::traits::input_parameter< const double& >::type theta_ls(theta_lsSEXP);
     Rcpp::traits::input_parameter< arma::cube >::type thresholds(thresholdsSEXP);
     Rcpp::traits::input_parameter< const int >::type constant_IRF(constant_IRFSEXP);
-    rcpp_result_gen = Rcpp::wrap(gpirtMCMC(y, theta, sample_iterations, burn_iterations, THIN, beta_prior_means, beta_prior_sds, beta_step_sizes, theta_os, theta_ls, thresholds, constant_IRF));
+    rcpp_result_gen = Rcpp::wrap(gpirtMCMC(y, theta, sample_iterations, burn_iterations, THIN, beta_prior_means, beta_prior_sds, theta_prior_means, theta_prior_sds, theta_os, theta_ls, thresholds, constant_IRF));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -54,7 +55,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_gpirt_gpirtMCMC", (DL_FUNC) &_gpirt_gpirtMCMC, 12},
+    {"_gpirt_gpirtMCMC", (DL_FUNC) &_gpirt_gpirtMCMC, 13},
     {"_gpirt_recover_fstar", (DL_FUNC) &_gpirt_recover_fstar, 9},
     {NULL, NULL, 0}
 };
