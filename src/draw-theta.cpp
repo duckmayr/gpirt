@@ -90,7 +90,7 @@ arma::mat draw_theta(const arma::vec& theta_star,
                      const arma::cube& fstar, const arma::cube& mu_star,
                      const arma::cube& thresholds,
                      const double& os,
-                     const double& ls) {
+                     const double& ls, const std::string& KERNEL) {
 
     // Bookkeeping variables
     arma::uword n = y.n_rows;   // # of respondents 
@@ -154,7 +154,7 @@ arma::mat draw_theta(const arma::vec& theta_star,
     }else{
         // Iterate each respondents
         for ( arma::uword i = 0; i < n; ++i ){
-            V              = K_time(ts, ts, os, ls, theta_prior_sds.col(i));
+            V              = K_time(ts, ts, os, ls, theta_prior_sds.col(i), KERNEL);
             // V.diag()       += 1e-6;
             arma::mat L    = arma::chol(V, "lower");
             // draw dynamic theta using ess

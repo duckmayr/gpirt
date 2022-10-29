@@ -31,6 +31,7 @@ Rcpp::List gpirtMCMC(const arma::cube& y, arma::mat theta,
                      const arma::mat& theta_prior_sds,
                      const double& theta_os,
                      const double& theta_ls,
+                     const std::string& KERNEL,
                      arma::cube thresholds,
                      const int constant_IRF) {
 
@@ -180,7 +181,7 @@ Rcpp::List gpirtMCMC(const arma::cube& y, arma::mat theta,
         f      = draw_f(f, theta, y, cholS, beta_prior_sds, mu, thresholds, constant_IRF);
         f_star = draw_fstar(f, theta, theta_star,beta_prior_sds, cholS, mu_star, constant_IRF);
         theta  = draw_theta(theta_star, y, theta, theta_prior_sds, f_star, \
-                              mu_star, thresholds, theta_os, theta_ls);
+                              mu_star, thresholds, theta_os, theta_ls, KERNEL);
         // update X from theta
         X.col(1) = theta;
         X.col(2) = arma::pow(theta, 2);

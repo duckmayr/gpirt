@@ -25,7 +25,7 @@ arma::mat draw_theta(const arma::vec& theta_star,
                      const arma::cube& fstar, const arma::cube& mu_star,
                      const arma::cube& thresholds,
                      const double& os,
-                     const double& ls);
+                     const double& ls, const std::string& KERNEL);
 
 arma::vec draw_theta_0(const arma::vec& theta_star,
                      const arma::cube& y, const arma::mat& theta,
@@ -49,7 +49,7 @@ arma::cube draw_threshold(const arma::cube& thresholds, const arma::cube& y,
 arma::mat K(const arma::vec& x1, const arma::vec& x2, const arma::vec& beta_prior_sds);
 arma::mat K_time(const arma::vec& x1, const arma::vec& x2,
                  const double& os, const double& ls,
-                 const arma::vec& theta_prior_sds);
+                 const arma::vec& theta_prior_sds, const std::string& KERNEL);
 
 // Likelihood function
 // double ll(const arma::vec& f, const arma::vec& y);
