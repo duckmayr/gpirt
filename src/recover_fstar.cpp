@@ -52,10 +52,10 @@ Rcpp::List recover_fstar(int seed,
     arma::cube cholS(n, n, horizon);
     for (arma::uword h = 0; h < horizon; h++){
         for ( arma::uword j = 0; j < m; ++j ) {
-            // cholS.slice(h) = arma::chol(S.slice(h)+ \
-            //             X.slice(h)*arma::diagmat(square(beta_prior_sds.col(j)))* \
-            //             X.slice(h).t(), "lower");
-            cholS.slice(h) = arma::chol(S.slice(h), "lower");
+            cholS.slice(h) = arma::chol(S.slice(h)+ \
+                        X.slice(h)*arma::diagmat(square(beta_prior_sds.col(j)))* \
+                        X.slice(h).t(), "lower");
+            // cholS.slice(h) = arma::chol(S.slice(h), "lower");
         }
     }
     // restore seed

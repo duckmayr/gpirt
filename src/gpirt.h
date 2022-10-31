@@ -39,7 +39,7 @@ arma::vec draw_theta_0(const arma::vec& theta_star,
 arma::cube draw_beta(arma::cube& beta, const arma::cube& X,
                     const arma::cube& y, const arma::cube& f,
                     const arma::mat& prior_means, const arma::mat& prior_sds,
-                    const arma::mat& proposal_sds, const arma::cube& thresholds);
+                    const arma::cube& thresholds);
 
 // Function to draw thresholds
 arma::cube draw_threshold(const arma::cube& thresholds, const arma::cube& y,
