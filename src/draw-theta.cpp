@@ -155,7 +155,7 @@ arma::mat draw_theta(const arma::vec& theta_star,
         // Iterate each respondents
         for ( arma::uword i = 0; i < n; ++i ){
             V              = K_time(ts, ts, os, ls, theta_prior_sds.col(i), KERNEL);
-            // V.diag()       += 1e-6;
+            V.diag()       += 1e-6;
             arma::mat L    = arma::chol(V, "lower");
             // draw dynamic theta using ess
             arma::vec raw_theta_ess = draw_theta_ess(theta.row(i).t(), y.row(i), L, fstar, mu_star, thresholds);
