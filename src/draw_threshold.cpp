@@ -36,7 +36,7 @@ arma::vec ess_threshold(const arma::vec& delta, const arma::cube& f,
     for (arma::uword h = 0; h < horizon; h++)
     {
         for (arma::uword i = 0; i < m; i++){
-            log_y += ll_bar(f.slice(h).col(i), y.slice(h).col(i), 
+            log_y += ll_bar(f.slice(h).col(i), y.slice(h).col(i),
                             mu.slice(h).col(i), thresholds);
         }
     }
@@ -110,8 +110,106 @@ arma::cube draw_threshold(const arma::cube& thresholds, const arma::cube& y,
                 thresholds_prime.slice(h).row(j) = delta_to_threshold(delta_prime).t();
             }
         }
-        
+
     }
-    
+
+    return thresholds_prime;
+}
+
+
+
+
+
+
+
+
+arma::vec ess_threshold(const arma::vec& delta, const arma::vec& f,
+                        const arma::vec& y, const arma::vec& mu) {
+    arma::uword C = delta.n_elem + 1;
+    // First we draw "an ellipse" -- a vector drawn from a multivariate
+    // normal with mean zero and covariance Sigma.
+    arma::vec v(C-1, arma::fill::ones);
+    arma::mat S = arma::diagmat(v);
+    arma::mat cholS = arma::chol(S, "lower");
+    arma::vec nu = rmvnorm(cholS);
+    // Then we calculate the log likelihood threshold for acceptance, "log_y"
+    double u = R::runif(0.0,1.0);
+    double log_y = std::log(u);
+    arma::vec thresholds = delta_to_threshold(delta);
+    log_y += ll_bar(f, y, mu, thresholds);
+
+    // For our while loop condition:
+    bool reject = true;
+    // Set up the proposal band and draw initial proposal epsilon:
+    double epsilon_min = 0.0;
+    double epsilon_max = M_2PI;
+    double epsilon = R::runif(epsilon_min, epsilon_max);
+    // double epsilon = (epsilon_max-epsilon_min)*arma::randu(1) + epsilon_min;
+    epsilon_min = epsilon - M_2PI;
+    // We'll create the arma::vec object for delta_prime out of the loop
+    arma::vec delta_prime(C-1, arma::fill::zeros);
+    int iter = 0;
+
+    while ( reject ) {
+        iter += 1;
+        // Get f_prime given current epsilon
+        delta_prime = delta * std::cos(epsilon) + nu * std::sin(epsilon);
+        // If the log likelihood is over our threshold, accept
+        arma::vec thresholds_prime = delta_to_threshold(delta_prime);
+        double log_y_prime = ll_bar(f, y,  mu, thresholds_prime);
+        if ( log_y_prime > log_y ) {
+            reject = false;
+        }
+        // otw, adjust our proposal band & draw a new epsilon, then repeat
+        else {
+            if ( epsilon < 0.0 ) {
+                epsilon_min = epsilon;
+            }
+            else {
+                epsilon_max = epsilon;
+            }
+            epsilon = R::runif(epsilon_min, epsilon_max);
+        }
+    }
+    return delta_prime;
+}
+
+arma::field<arma::mat> draw_threshold(
+        const arma::field<arma::mat>& thresholds,
+        const arma::field<arma::mat>& y,
+        const arma::field<arma::mat>& f,
+        const arma::field<arma::mat>& mu,
+        const int constant_IRF) {
+    arma::uword m = thresholds.n_rows;
+    arma::uword C = thresholds(0, 0).n_rows - 1;
+    arma::uword horizon = thresholds.n_rows;
+    arma::field<arma::mat> thresholds_prime(horizon);
+    // arma::cube thresholds_prime(m, C+1, horizon, arma::fill::zeros);
+    if(constant_IRF==1){
+        // for ( arma::uword j = 0; j < m; ++j ){
+        //     arma::vec delta = threshold_to_delta(thresholds.slice(0).row(j).t());
+        //     arma::vec delta_prime = ess_threshold(delta, f, y, mu);
+        //     thresholds_prime.slice(0).row(j) = delta_to_threshold(delta_prime).t();
+        //     for(arma::uword h = 1; h < horizon; ++h){
+        //         thresholds_prime.slice(h).row(j) = thresholds_prime.slice(0).row(j);
+        //     }
+        // }
+    }
+    else{
+        for ( arma::uword h = 0; h < horizon; ++h){
+            arma::mat tmp = thresholds(h, 0);
+            arma::uword m = tmp.n_cols;
+            for ( arma::uword j = 0; j < m; ++j ){
+                arma::vec delta = threshold_to_delta(tmp.col(j));
+                arma::vec delta_prime = ess_threshold(
+                    delta, f(h, 0).col(j), y(h, 0).col(j), mu(h, 0).col(j)
+                );
+                tmp.col(j) = delta_to_threshold(delta_prime);
+            }
+            thresholds_prime(h, 0) = tmp;
+        }
+
+    }
+
     return thresholds_prime;
 }

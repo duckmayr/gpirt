@@ -11,10 +11,13 @@ gpirtMCMC(
   THIN = 1,
   CHAIN = 1,
   vote_codes = list(yea = 1:3, nay = 4:6, missing = c(0, 7:9, NA)),
-  beta_prior_means = matrix(0, nrow = 2, ncol = ncol(data)),
-  beta_prior_sds = matrix(3, nrow = 2, ncol = ncol(data)),
+  beta_prior_means = matrix(0, nrow = 3, ncol = ncol(data)),
+  beta_prior_sds = matrix(3, nrow = 3, ncol = ncol(data)),
+  theta_prior_means = matrix(0, nrow = 2, ncol = nrow(data)),
+  theta_prior_sds = matrix(1, nrow = 2, ncol = nrow(data)),
   theta_os = 1,
   theta_ls = 10,
+  KERNEL = "Matern",
   theta_init = NULL,
   thresholds = NULL,
   SEED = 1,
@@ -52,6 +55,12 @@ and slope; by default, a matrix of zeros}
 and two rows giving the prior standard deviations for the items' linear
 means' intercept and slope; by default, a matrix of threes}
 
+\item{theta_prior_means}{A numeric  matrix of with \code{ncol(data)} columns
+giving the prior mean of theta by default, a  matrix of zeros}
+
+\item{theta_prior_sds}{A numeric  matrix of with \code{ncol(data)} columns
+giving sd of prior variance constant theta; by default, a  matrix of ones}
+
 \item{theta_os}{A numeric value giving output scale of dynamic ability GP model}
 
 \item{theta_ls}{A numeric value giving length scale of dynamic ability GP model}
@@ -62,7 +71,7 @@ values are drawn from the parameters' prior distributions.}
 
 \item{thresholds}{A vector of length \code{C+1} where \code{C} is the number
 of all categories; if NULL (the default), the values are chosen from -Inf to Inf
- of length \code{C+1} with each y having equal probablity under prior mean.}
+of length \code{C+1} with each y having equal probablity under prior mean.}
 
 \item{constant_IRF}{A binary indicator of whether IRFs are constant over time}
 
@@ -70,21 +79,21 @@ of all categories; if NULL (the default), the values are chosen from -Inf to Inf
 }
 \value{
 A list with elements
-  \describe{
-      \item{theta}{The theta parameter draws, stored in a matrix with
-                   \code{sample_iterations} + 1 rows (initial values are
-                   included) and n columns.}
-      \item{beta}{The beta parameter draws, stored in an array with 2 rows,
-                  \code{m} columns, and \code{sample_iterations} + 1 slices.}
-      \item{f}{The f parameter draws, stored in an array with \code{n} rows,
-               \code{m} columns, and \code{sample_iterations} + 1 slices.}
-      \item{IRFs}{Estimated item response functions for the items, with one
-                  column per item, or \code{m} columns, and 1001 rows.
-                  The first row has the probabilities of a 1 response
-                  for a theta value of -5.0, the second the probability for
-                  each item of a 1 response for a theta value of -4.99,
-                  ..., and the last for a theta value of 5.0.}
-  }
+\describe{
+\item{theta}{The theta parameter draws, stored in a matrix with
+\code{sample_iterations} + 1 rows (initial values are
+included) and n columns.}
+\item{beta}{The beta parameter draws, stored in an array with 2 rows,
+\code{m} columns, and \code{sample_iterations} + 1 slices.}
+\item{f}{The f parameter draws, stored in an array with \code{n} rows,
+\code{m} columns, and \code{sample_iterations} + 1 slices.}
+\item{IRFs}{Estimated item response functions for the items, with one
+column per item, or \code{m} columns, and 1001 rows.
+The first row has the probabilities of a 1 response
+for a theta value of -5.0, the second the probability for
+each item of a 1 response for a theta value of -4.99,
+..., and the last for a theta value of 5.0.}
+}
 }
 \description{
 Provides posterior samples for the GP-IRT.

@@ -105,61 +105,94 @@ gpirtMCMC <- function(data, sample_iterations, burn_iterations,
                       theta_prior_sds = matrix(1, nrow = 2, ncol = nrow(data)),
                       theta_os = 1, theta_ls = 10, KERNEL = "Matern",
                       theta_init = NULL, thresholds = NULL, SEED=1, constant_IRF=0) {
-    # Setup result list for multiple chains
+    ## Setup result list for multiple chains
     result = list()
+
     for(chain in 1:CHAIN){
-        # Set seed for each chain
+
+        ## Set seed for each chain
         set.seed(SEED+chain-1);
-        # First we make sure our data are in the proper format:
+
+        ## First we make sure our data are in the proper format:
         if ( !is.null(vote_codes) ){
             data <- as.response_matrix(data, vote_codes)
-        }  
-        
-        # Now we make sure we have initial values for theta
+        }
+
+        ## Draw initial theta values if they weren't supplied
         if ( is.null(theta_init) ) {
-            # initial theta as # of respondents by # of sessions
-            theta_init <- matrix(0, nrow=nrow(data), ncol=dim(data)[3])
-            for(i in 1:nrow(data)){
-                theta_init[i,1] <- rnorm(1, theta_prior_means[1,i],theta_prior_sds[1,i])
-            }
-            
-            if(dim(data)[3]>=2){
-                for(h in 2:dim(data)[3]){
-                        theta_init[,h] <- theta_init[,1]
+            theta_init = lapply(seq_along(data), function(k) {
+                rnorm(n = nrow(data[[k]]))
+            })
+        } else {
+            ## Or do some sanity checks if the user did supply them
+            init_len_msg = "theta_init should be a list the same length as data"
+            if ( is.list(data) ) {
+                if ( !is.list(theta_init) ) {
+                    stop(init_len_msg)
+                } else {
+                    if ( length(theta_init) != length(data) ) {
+                        stop(init_len_msg)
+                    }
+                    for ( k in seq_along(data) ) {
+                        if ( length(theta_init[[k]]) != nrow(data[[k]]) ) {
+                            problem = paste0("theta_init[[", k, "]]")
+                            stop(problem, " had the wrong # of elements")
+                        }
+                    }
                 }
             }
-            
         }
 
-        # Now we make sure we have initial values for thresholds
+        ## Next we make sure we have initial values for thresholds
         if ( is.null(thresholds) ) {
-            if(is.matrix(data)){
-                unique_ys = unique(data)
-            }else{
-                n = dim(data)[1]
-                m = dim(data)[2]
-                horizon = dim(data)[3]
-                unique_ys = unique(array(data, n*m*horizon))
-            }   
-            C = length(unique(unique_ys[!is.na(unique_ys)]))
-            thresholds <- array(array(0, m*horizon*(C+1)), c(m,C+1,horizon))
-            for(j in 1:m){
-                thresholds[j,1,] <- -Inf
-                for(i in 1:(C-1)){
-                    thresholds[j,1+i,] = qnorm(i/C, 0, 1, 1, 0)
+            C = length(unique(na.omit(c(unlist(data)))))
+            thresholds = c(-Inf, qnorm(1:(C-1) / C, 0, 1, 1, 0), Inf)
+            thresholds = lapply(data, function(M) {
+                m = ncol(M)
+                matrix(rep(thresholds, m), ncol = m)
+            })
+        }
+
+        ## Get information about which periods respondents are active in,
+        ## and which row of each period's response matrix corresponds to them
+        horizon = length(data)
+        respondents = unique(unlist(sapply(data, rownames)))
+        n = length(respondents)
+        respondent_periods = matrix(ncol = n, nrow = horizon)
+        theta_indices = matrix(ncol = n, nrow = horizon)
+        for ( j in 1:horizon ) {
+            M = data[[j]]
+            for ( i in 1:n ) {
+                r = respondents[i]
+                if ( r %in% rownames(M) ) {
+                    respondent_periods[j, i] = j - 1
+                    theta_indices[j, i] = which(rownames(M) == r) - 1
+                } else {
+                    respondent_periods[j, i] = -1
                 }
-                thresholds[j,C+1,] = Inf
             }
         }
 
-        # Now we can call the C++ sampler function
-        result[[chain]] <- .gpirtMCMC(
-            data, theta_init, sample_iterations, burn_iterations, THIN,
+        ## Now we can call the C++ sampler function
+        tmp = .gpirtMCMC(
+            data, theta_init, theta_indices, respondent_periods,
+            sample_iterations, burn_iterations, THIN,
             beta_prior_means, beta_prior_sds,
             theta_prior_means, theta_prior_sds,
             theta_os, theta_ls, KERNEL, thresholds, constant_IRF
         )
+
+        ## Provide dimension names to help interpretation
+        for ( h in 1:horizon ) {
+            rownames(tmp$theta[[h]]) = rownames(data[[h]])
+            rownames(tmp$f[[h]]) = rownames(data[[h]])
+            colnames(tmp$f[[h]]) = colnames(data[[h]])
+            colnames(tmp$fstar[[h]]) = colnames(data[[h]])
+            colnames(tmp$threshold[[h]]) = colnames(data[[h]])
+        }
+        result[[chain]] = tmp
     }
-    # And return the result
+
+    ## Finally we return the result
     return(result)
 }

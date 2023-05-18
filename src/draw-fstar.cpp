@@ -16,15 +16,18 @@ inline arma::mat draw_fstar_(const arma::mat& f, const arma::vec& theta,
     arma::uword m = f.n_cols;
     arma::uword N = theta_star.n_elem;
     arma::mat result(N, m);
+    arma::vec alpha(n);
+    arma::vec draw_mean(N);
+    // The following lines *were* in the loop but I took them out when I
+    // hard-coded the hyper-parameters
+    arma::mat kstar  = K(theta, theta_star, arma::ones(3)); // beta_prior_sds.col(j));
+    arma::mat kstarT = kstar.t();
+    arma::mat tmp = arma::solve(arma::trimatl(L), kstar);
+    // arma::mat K_post = K(theta_star, theta_star, beta_prior_sds.col(j)) - tmp.t() * tmp;
+    arma::mat K_post = K(theta_star, theta_star, arma::ones(3)) - tmp.t() * tmp;
+    K_post.diag() += 1e-6;
+    arma::mat L_post = arma::chol(K_post, "lower");
     for ( arma::uword j = 0; j < m; ++j ) {
-        arma::mat kstar  = K(theta, theta_star, beta_prior_sds.col(j));
-        arma::mat kstarT = kstar.t();
-        arma::mat tmp = arma::solve(arma::trimatl(L), kstar);
-        arma::mat K_post = K(theta_star, theta_star, beta_prior_sds.col(j)) - tmp.t() * tmp;
-        K_post.diag() += 1e-6;
-        arma::mat L_post = arma::chol(K_post, "lower");
-        arma::vec alpha(n);
-        arma::vec draw_mean(N);
         alpha = double_solve(L, f.col(j));
         draw_mean = kstarT * alpha + mu_star.col(j);
         // draw_mean = kstarT * alpha;
@@ -33,9 +36,9 @@ inline arma::mat draw_fstar_(const arma::mat& f, const arma::vec& theta,
     return result;
 }
 
-arma::cube draw_fstar(const arma::cube& f, 
+arma::cube draw_fstar(const arma::cube& f,
                       const arma::mat& theta,
-                      const arma::vec& theta_star, 
+                      const arma::vec& theta_star,
                       const arma::mat& beta_prior_sds,
                       const arma::cube& L,
                       const arma::cube& mu_star,
@@ -45,7 +48,7 @@ arma::cube draw_fstar(const arma::cube& f,
     arma::uword m = f.n_cols;
     arma::uword N = theta_star.n_elem;
     arma::cube results = arma::zeros<arma::cube>(N, m, horizon);
-    
+
     if(constant_IRF==0){
         // draw fstar separately for non-constant IRF
         for ( arma::uword h = 0; h < horizon; ++h ){
@@ -66,7 +69,7 @@ arma::cube draw_fstar(const arma::cube& f,
         }
         // implement naive 100 inducing points
         // evenly spread inducing locations in the range of current theta
-        // use knn for inducing values 
+        // use knn for inducing values
         int n_induced_points = 100;
         arma::mat f_constant(n_induced_points, m);
         arma::vec theta_constant(f_constant.n_rows);
@@ -83,7 +86,7 @@ arma::cube draw_fstar(const arma::cube& f,
                     theta_constant, points, "linear");
             f_constant.col(j) = points;
         }
-        
+
         // Set up X
         arma::mat X_constant(f_constant.n_rows, 3);
         X_constant.col(0) = arma::ones<arma::vec>(f_constant.n_rows);
@@ -109,6 +112,34 @@ arma::cube draw_fstar(const arma::cube& f,
             results.slice(h) = f_star;
         }
     }
-    
+
     return results;
 }
+
+arma::field<arma::mat> draw_fstar(
+        const arma::field<arma::mat>& f,
+        const arma::field<arma::vec>& theta,
+        const arma::vec& theta_star,
+        const arma::mat& beta_prior_sds,
+        const arma::field<arma::mat>& L,
+        const arma::field<arma::mat>& mu_star,
+        const int constant_IRF) {
+    // Set bookkeeping variables
+    arma::uword horizon = f.n_rows;
+    arma::uword N = theta_star.n_elem;
+    // Setup results storage
+    arma::field<arma::mat> result(horizon);
+    // Draw f* separately for non-constant IRF
+    for ( arma::uword h = 0; h < horizon; ++h ){
+        result(h, 0) = draw_fstar_(
+            f(h, 0),
+            theta(h, 0),
+            theta_star,
+            beta_prior_sds,
+            L(h, 0),
+            mu_star(h, 0)
+        );
+    }
+    return result;
+}
+

@@ -68,8 +68,14 @@ inline arma::mat draw_f_(const arma::mat& f, const arma::mat& y, const arma::mat
     arma::uword n = f.n_rows;
     arma::uword m = f.n_cols;
     arma::mat result(n, m);
-    for ( arma::uword j = 0; j < m; ++j) {
-        result.col(j) = ess(f.col(j), y.col(j), cholS, mu.col(j), thresholds.row(j).t());
+    if ( thresholds.n_cols == m ) {
+        for ( arma::uword j = 0; j < m; ++j) {
+            result.col(j) = ess(f.col(j), y.col(j), cholS, mu.col(j), thresholds.col(j));
+        }
+    } else {
+        for ( arma::uword j = 0; j < m; ++j) {
+            result.col(j) = ess(f.col(j), y.col(j), cholS, mu.col(j), thresholds.row(j).t());
+        }
     }
     return result;
 }
@@ -129,6 +135,31 @@ arma::cube draw_f(const arma::cube& f, const arma::mat& theta, const arma::cube&
             }
         }
     }
-    
+
+    return result;
+}
+
+arma::field<arma::mat> draw_f(
+        const arma::field<arma::mat>& f,
+        const arma::field<arma::vec>& theta,
+        const arma::field<arma::mat>& y,
+        const arma::field<arma::mat>& cholS,
+        const arma::mat& beta_prior_sds,
+        const arma::field<arma::mat>& mu,
+        const arma::field<arma::mat>& thresholds,
+        const int constant_IRF) {
+
+    // Set bookkeeping variables
+    arma::uword horizon = f.n_rows;
+
+    // Setup results storage
+    arma::field<arma::mat> result(horizon);
+
+    for ( arma::uword h = 0; h < horizon; ++h ) {
+        result(h, 0) = draw_f_(
+            f(h, 0), y(h, 0), cholS(h, 0), mu(h, 0), thresholds(h, 0)
+        );
+    }
+
     return result;
 }

@@ -8,15 +8,32 @@ Rcpp::NumericVector get_seed_state();
 // Function to draw f
 arma::cube draw_f(const arma::cube& f, const arma::mat& theta, const arma::cube& y, const arma::cube& cholS,
             const arma::mat& beta_prior_sds, const arma::cube& mu, const arma::cube& thresholds, const int constant_IRF);
+arma::field<arma::mat> draw_f(
+        const arma::field<arma::mat>& f,
+        const arma::field<arma::vec>& theta,
+        const arma::field<arma::mat>& y,
+        const arma::field<arma::mat>& cholS,
+        const arma::mat& beta_prior_sds,
+        const arma::field<arma::mat>& mu,
+        const arma::field<arma::mat>& thresholds,
+        const int constant_IRF);
 
 // Function to draw fstar
-arma::cube draw_fstar(const arma::cube& f, 
+arma::cube draw_fstar(const arma::cube& f,
                       const arma::mat& theta,
-                      const arma::vec& theta_star, 
+                      const arma::vec& theta_star,
                       const arma::mat& beta_prior_sds,
                       const arma::cube& L,
                       const arma::cube& mu_star,
                       const int constant_IRF);
+arma::field<arma::mat> draw_fstar(
+        const arma::field<arma::mat>& f,
+        const arma::field<arma::vec>& theta,
+        const arma::vec& theta_star,
+        const arma::mat& beta_prior_sds,
+        const arma::field<arma::mat>& L,
+        const arma::field<arma::mat>& mu_star,
+        const int constant_IRF);
 
 // Function to draw theta
 arma::mat draw_theta(const arma::vec& theta_star,
@@ -35,6 +52,17 @@ arma::vec draw_theta_0(const arma::vec& theta_star,
                      const arma::vec& theta_prior_sds,
                      const arma::vec& theta_step_sizes);
 
+arma::field<arma::vec> draw_theta(
+        const arma::vec& theta_star,
+        const arma::field<arma::mat>& y,
+        const arma::field<arma::vec>& theta,
+        const arma::mat& theta_indices,
+        const arma::mat& respondent_periods,
+        const arma::field<arma::mat>& fstar,
+        const arma::field<arma::mat>& mu_star,
+        const arma::field<arma::mat>& thresholds,
+        const double os, const double ls, const std::string& KERNEL);
+
 // Function to draw beta
 arma::cube draw_beta(arma::cube& beta, const arma::cube& X,
                     const arma::cube& y, const arma::cube& f,
@@ -44,6 +72,12 @@ arma::cube draw_beta(arma::cube& beta, const arma::cube& X,
 // Function to draw thresholds
 arma::cube draw_threshold(const arma::cube& thresholds, const arma::cube& y,
                     const arma::cube& f, const arma::cube& mu, const int constant_IRF);
+arma::field<arma::mat> draw_threshold(
+        const arma::field<arma::mat>& thresholds,
+        const arma::field<arma::mat>& y,
+        const arma::field<arma::mat>& f,
+        const arma::field<arma::mat>& mu,
+        const int constant_IRF);
 
 // Covariance function
 arma::mat K(const arma::vec& x1, const arma::vec& x2, const arma::vec& beta_prior_sds);
