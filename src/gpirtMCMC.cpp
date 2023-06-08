@@ -63,7 +63,7 @@ Rcpp::List gpirtMCMC(const arma::cube& y, arma::mat theta,
 
     // We need to have a matrix with a column of ones and a column of theta
     // for generating the linear mean
-    
+
     arma::cube mu(n,m,horizon);
 
     // Setup each horizon separately for non-constant IRFs
@@ -117,8 +117,8 @@ Rcpp::List gpirtMCMC(const arma::cube& y, arma::mat theta,
         arma::mat mu_constant(n*horizon, m);
         for ( arma::uword j = 0; j < m; ++j ) {
             for ( arma::uword p = 0; p < 3; ++p ) {
-                beta.slice(0).col(j).row(p) = R::rnorm(beta_prior_means(p, j), beta_prior_sds(p, j));
-                // beta.slice(0).col(j).row(p) = 0;
+                // beta.slice(0).col(j).row(p) = R::rnorm(beta_prior_means(p, j), beta_prior_sds(p, j));
+                beta.slice(0).col(j).row(p) = 0;
             }
         }
         mu_constant = X_constant * beta.slice(0);
@@ -194,7 +194,7 @@ Rcpp::List gpirtMCMC(const arma::cube& y, arma::mat theta,
             }
         }
         // draw beta
-        // beta = draw_beta(beta, X, y, f, beta_prior_means, beta_prior_sds, thresholds);
+        beta = draw_beta(beta, X, y, f, beta_prior_means, beta_prior_sds, thresholds);
 
         // update up S, mu, cholS from theta/beta
         for (arma::uword h = 0; h < horizon; h++){

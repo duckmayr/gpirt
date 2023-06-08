@@ -67,9 +67,7 @@ inline arma::vec draw_beta_ess(const arma::vec& beta,
     epsilon_min = epsilon - M_2PI;
     // We'll create the arma::vec object for f_prime out of the loop
     arma::vec beta_prime(n);
-    int iter = 0;
     while ( reject ) {
-        iter += 1;
         // Get f_prime given current epsilon
         beta_prime = beta * std::cos(epsilon) + nu * std::sin(epsilon);
         // If the log likelihood is over our threshold, accept
