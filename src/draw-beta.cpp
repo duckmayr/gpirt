@@ -106,9 +106,11 @@ arma::cube draw_beta(arma::cube& beta, const arma::cube& X,
         for ( arma::uword j = 0; j < m; ++j ) {
             arma::mat cholS(3,3, arma::fill::zeros);
             cholS.diag() = prior_sds.col(j);
-            cholS = arma::chol(arma::powmat(cholS,2), "lower");
+            cholS = arma::powmat(cholS,2);
+            cholS.diag() += 1e-6;
+            cholS = arma::chol(cholS, "lower");
             result.slice(h).col(j) = draw_beta_ess(beta.slice(h).col(j),\
-             f.slice(h).col(j), y.slice(h).col(j), cholS, X.slice(h), thresholds.slice(h).row(j).t());
+            f.slice(h).col(j), y.slice(h).col(j), cholS, X.slice(h), thresholds.slice(h).row(j).t());
         }
 
     }
