@@ -1,6 +1,7 @@
 #include "gpirt.h"
 #include "mvnormal.h"
 #include <Rcpp.h>
+#include <time.h>
 
 using namespace Rcpp;
 
@@ -49,7 +50,7 @@ Rcpp::List gpirtMCMC(const arma::cube& y, arma::mat theta,
     arma::mat mean_zeros = arma::zeros<arma::mat>(n, horizon);
     arma::cube S = arma::zeros<arma::cube>(n, n, horizon);
     for (arma::uword h = 0; h < horizon; h++)
-    {
+    {   
         S.slice(h) = K(theta.col(h), theta.col(h), beta_prior_sds.col(0));
         S.slice(h).diag() += 1e-6;
     }
@@ -65,6 +66,7 @@ Rcpp::List gpirtMCMC(const arma::cube& y, arma::mat theta,
     // for generating the linear mean
 
     arma::cube mu(n,m,horizon);
+    Rcpp::Rcout << "Setting up gpirtMCMC...\n";
 
     // Setup each horizon separately for non-constant IRFs
     if(constant_IRF==0){
@@ -152,8 +154,9 @@ Rcpp::List gpirtMCMC(const arma::cube& y, arma::mat theta,
     for (arma::uword h = 0; h < horizon; h++){
         mu_star.slice(h) = Xstar * beta.slice(h);
     }
-     
+    
     arma::cube f_star = draw_fstar(f, theta, theta_star, beta_prior_sds,cholS, mu_star, constant_IRF);
+    Rcpp::Rcout << "start running gpirtMCMC...\n";
 
     // Setup results storage
     arma::cube              theta_draws(int(sample_iterations/THIN), n, y.n_slices);
@@ -178,10 +181,16 @@ Rcpp::List gpirtMCMC(const arma::cube& y, arma::mat theta,
         set_seed(iter);
 
         // Draw new parameter values
+        // clock_t begin_time = clock();
         f      = draw_f(f, theta, y, cholS, beta_prior_sds, mu, thresholds, constant_IRF);
+        // Rcpp::Rcout << "drawing f takes " << float( clock () - begin_time ) /  CLOCKS_PER_SEC * 1000 << " ms...\n";
+        // begin_time = clock();
         f_star = draw_fstar(f, theta, theta_star,beta_prior_sds, cholS, mu_star, constant_IRF);
+        // Rcpp::Rcout << "drawing fstar takes " << float( clock () - begin_time ) /  CLOCKS_PER_SEC * 1000 << " ms...\n";
+        // begin_time = clock();
         theta  = draw_theta(theta_star, y, theta, theta_prior_sds, f_star, \
                               mu_star, thresholds, theta_os, theta_ls, KERNEL);
+        // Rcpp::Rcout << "drawing theta takes " << float( clock () - begin_time ) /  CLOCKS_PER_SEC * 1000 << " ms...\n";
         // update X from theta
         X.col(1) = theta;
         X.col(2) = arma::pow(theta, 2);
@@ -194,8 +203,10 @@ Rcpp::List gpirtMCMC(const arma::cube& y, arma::mat theta,
             }
         }
         // draw beta
+        // begin_time = clock();
         beta = draw_beta(beta, X, y, f, beta_prior_means, beta_prior_sds, thresholds);
-
+        // Rcpp::Rcout << "drawing beta takes " << float( clock () - begin_time ) /  CLOCKS_PER_SEC * 1000 << " ms...\n";
+        
         // update up S, mu, cholS from theta/beta
         for (arma::uword h = 0; h < horizon; h++){
             mu.slice(h) = X.slice(h) * beta.slice(h);
@@ -215,7 +226,9 @@ Rcpp::List gpirtMCMC(const arma::cube& y, arma::mat theta,
         }
 
         // draw thresholds
+        // begin_time = clock();
         thresholds = draw_threshold(thresholds, y, f, mu, constant_IRF);
+        // Rcpp::Rcout << "drawing threshold takes " << float( clock () - begin_time ) /  CLOCKS_PER_SEC * 1000 << " ms...\n";
         
         // compute current log likelihood
         double ll = 0;

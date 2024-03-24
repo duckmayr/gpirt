@@ -51,10 +51,8 @@ arma::vec ess_threshold(const arma::vec& delta, const arma::cube& f,
     epsilon_min = epsilon - M_2PI;
     // We'll create the arma::vec object for delta_prime out of the loop
     arma::vec delta_prime(C-1, arma::fill::zeros);
-    int iter = 0;
 
     while ( reject ) {
-        iter += 1;
         // Get f_prime given current epsilon
         delta_prime = delta * std::cos(epsilon) + nu * std::sin(epsilon);
         // If the log likelihood is over our threshold, accept

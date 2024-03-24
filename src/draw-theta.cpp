@@ -52,10 +52,8 @@ inline arma::vec draw_theta_ess(const arma::vec& theta,
     epsilon_min = epsilon - M_2PI;
     // We'll create the arma::vec object for nu_prime out of the loop
     arma::vec theta_prime(horizon, arma::fill::zeros);
-    int iter = 0;
 
     while ( reject ) {
-        iter += 1;
         // Get nu_prime given current epsilon
         theta_prime = theta * std::cos(epsilon) + nu * std::sin(epsilon);
         theta_prime.clamp(-5.0, 5.0);

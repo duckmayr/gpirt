@@ -65,3 +65,5 @@ arma::vec threshold_to_delta(const arma::vec& thresholds);
 
 // cholesky decomposition
 arma::mat double_solve(const arma::mat& L, const arma::mat& X);
+arma::mat compress_toeplitz(arma::mat& T);
+arma::mat toep_cholesky_lower(arma::mat& T);
