@@ -49,12 +49,11 @@ double ll(const arma::vec& f, const arma::vec& y, const arma::mat& thresholds) {
     // each respondent for all items
     arma::uword m = f.n_elem;
     double result = 0.0;
-    int horizon = int(m / thresholds.n_rows);
     for ( arma::uword j = 0; j < m; ++j ) {
         if ( !std::isnan(y[j]) ) {
             int c = int(y[j]);
-            double z1 = thresholds(j % horizon, c-1) - f[j];
-            double z2 = thresholds(j % horizon, c) - f[j];
+            double z1 = thresholds(j % thresholds.n_rows, c-1) - f[j];
+            double z2 = thresholds(j % thresholds.n_rows, c) - f[j];
             result += std::log(R::pnorm(z2, 0, 1, 1, 0)-R::pnorm(z1, 0, 1, 1, 0)+1e-6);
         }
     }
